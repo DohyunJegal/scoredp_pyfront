@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
@@ -77,7 +77,7 @@ function groupByUnofficialLevel(scores: ScoreItem[]) {
   return Array.from(map.entries()).sort((a, b) => parseFloat(b[0]) - parseFloat(a[0]));
 }
 
-export default function ScoresPage() {
+function ScoresContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -202,5 +202,13 @@ export default function ScoresPage() {
         </section>
       ))}
     </div>
+  );
+}
+
+export default function ScoresPage() {
+  return (
+    <Suspense>
+      <ScoresContent />
+    </Suspense>
   );
 }
