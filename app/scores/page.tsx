@@ -26,13 +26,13 @@ const CLEAR_LABEL: Record<number, string> = {
 };
 
 const CLEAR_COLOR: Record<number, string> = {
-  7: "#5d9eff",
-  6: "#efef6d",
+  7: "linear-gradient(to bottom, #7bdcff, #f1fbfb)",
+  6: "#fbfb70",
   5: "#fffffd",
   4: "#2efffd",
-  3: "#b1ff1c",
-  2: "#ff76ff",
-  1: "#aaaaaa",
+  3: "#afe14f",
+  2: "#d35ad3",
+  1: "#808080",
 };
 
 const CHART_STYLE: Record<string, { color: string; prefix: string }> = {
@@ -61,11 +61,7 @@ function SongCard({ item }: { item: ScoreItem }) {
         )}
       </div>
       {item.clear_type > 0 && (
-        <div
-          className={`w-2 shrink-0${item.clear_type === 7 ? " fc-blink" : ""}`}
-          style={item.clear_type !== 7 ? { background: color } : undefined}
-          title={CLEAR_LABEL[item.clear_type]}
-        />
+        <div className="w-2 shrink-0" style={{ background: color }} title={CLEAR_LABEL[item.clear_type]} />
       )}
     </div>
   );
@@ -177,10 +173,7 @@ function ScoresContent() {
           <div className="flex gap-3 flex-wrap text-xs text-white/50">
             {Object.entries(CLEAR_LABEL).sort((a, b) => Number(b[0]) - Number(a[0])).map(([ct, label]) => (
               <span key={ct} className="flex items-center gap-1">
-                <span
-                  className={`inline-block w-2 h-2 rounded-sm${Number(ct) === 7 ? " fc-blink" : ""}`}
-                  style={Number(ct) !== 7 ? { background: CLEAR_COLOR[Number(ct)] } : undefined}
-                />
+                <span className="inline-block w-2 h-2 rounded-sm" style={{ background: CLEAR_COLOR[Number(ct)] }} />
                 {label}
               </span>
             ))}
