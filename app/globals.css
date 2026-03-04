@@ -1,5 +1,16 @@
 @import "tailwindcss";
 
+@keyframes fc-blink {
+  0%   { background: #ffffff; }
+  33%  { background: #5d9eff; }
+  66%  { background: #ffd700; }
+  100% { background: #ffffff; }
+}
+
+.fc-blink {
+  animation: fc-blink 1s step-end infinite;
+}
+
 body {
   background: #0f0f1a;
   color: #e0e0f0;

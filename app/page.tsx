@@ -22,6 +22,9 @@ export default function HomePage() {
             에 로그인합니다.
           </li>
           <li>
+            베이직 코스에 가입하지 않으셨다면, 가입을 진행합니다.
+          </li>
+          <li>
             <code>{bookmarklet}</code> 를 콘솔에 입력합니다.
           </li>
           <li>크롤러가 정보를 수집해 서버에 전송합니다.</li> 
