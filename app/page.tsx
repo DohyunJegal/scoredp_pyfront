@@ -1,4 +1,3 @@
-import Link from "next/link";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 const bookmarklet = `javascript:$.getScript("${API_URL}/c");`;
@@ -23,7 +22,7 @@ export default function HomePage() {
             에 로그인합니다.
           </li>
           <li>
-            <code>javascript:$.getScript("http://localhost:8000/c");</code> 를 콘솔에 입력합니다.
+            <code>{bookmarklet}</code> 를 콘솔에 입력합니다.
           </li>
           <li>크롤러가 정보를 수집해 서버에 전송합니다.</li> 
         </ol>
