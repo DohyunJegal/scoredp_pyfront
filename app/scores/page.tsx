@@ -61,7 +61,7 @@ function SongCard({ item }: { item: ScoreItem }) {
         )}
       </div>
       {item.clear_type > 0 && (
-        <div className={`w-2 shrink-0 ${color}`} title={CLEAR_LABEL[item.clear_type]} />
+        <div className="w-2 shrink-0" style={{ background: color }} title={CLEAR_LABEL[item.clear_type]} />
       )}
     </div>
   );
@@ -173,7 +173,7 @@ function ScoresContent() {
           <div className="flex gap-3 flex-wrap text-xs text-white/50">
             {Object.entries(CLEAR_LABEL).sort((a, b) => Number(b[0]) - Number(a[0])).map(([ct, label]) => (
               <span key={ct} className="flex items-center gap-1">
-                <span className={`inline-block w-2 h-2 rounded-sm ${CLEAR_COLOR[Number(ct)]}`} />
+                <span className="inline-block w-2 h-2 rounded-sm" style={{ background: CLEAR_COLOR[Number(ct)] }} />
                 {label}
               </span>
             ))}
