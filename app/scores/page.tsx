@@ -26,13 +26,13 @@ const CLEAR_LABEL: Record<number, string> = {
 };
 
 const CLEAR_COLOR: Record<number, string> = {
-  7: "bg-yellow-400",
-  6: "bg-orange-500",
-  5: "bg-red-600",
-  4: "bg-blue-500",
-  3: "bg-green-500",
-  2: "bg-purple-500",
-  1: "bg-zinc-500",
+  7: "#5d9eff",
+  6: "#efef6d",
+  5: "#fffffd",
+  4: "#2efffd",
+  3: "#b1ff1c",
+  2: "#ff76ff",
+  1: "#aaaaaa",
 };
 
 const CHART_STYLE: Record<string, { color: string; prefix: string }> = {
