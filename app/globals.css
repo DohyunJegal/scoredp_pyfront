@@ -8,7 +8,7 @@
 }
 
 .fc-blink {
-  animation: fc-blink 1s step-end infinite;
+  animation: fc-blink 0.5s step-end infinite;
 }
 
 body {
