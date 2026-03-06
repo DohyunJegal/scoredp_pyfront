@@ -83,7 +83,8 @@ function ScoresContent() {
 
   const idParam = searchParams.get("id") ?? "";
   const [search, setSearch] = useState(idParam);
-  const [level, setLevel] = useState<number | null>(null);
+  const [level, setLevel] = useState<number | null>(12);
+  const [sortByClear, setSortByClear] = useState(false);
   const [scores, setScores] = useState<ScoreItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -126,7 +127,12 @@ function ScoresContent() {
     router.push(`/scores?id=${id}`);
   };
 
-  const groups = groupByUnofficialLevel(scores);
+  const groups = groupByUnofficialLevel(scores).map(([lvKey, items]) => [
+    lvKey,
+    sortByClear
+      ? [...items].sort((a, b) => b.clear_type - a.clear_type || a.title.localeCompare(b.title, 'ja'))
+      : items,
+  ] as [string, ScoreItem[]]);
   const hasResult = !loading && !error && idParam;
 
   return (
@@ -153,7 +159,7 @@ function ScoresContent() {
       {idParam && (
         <>
           {/* 레벨 필터 */}
-          <div className="flex gap-2 flex-wrap">
+          <div className="flex gap-2 flex-wrap items-center">
             {LEVELS.map((lv) => (
               <button
                 key={lv}
@@ -167,6 +173,13 @@ function ScoresContent() {
                 ☆{lv}
               </button>
             ))}
+            <label className="flex items-center gap-2 cursor-pointer select-none text-sm text-white/60">
+              <input type="checkbox" className="sr-only" checked={sortByClear} onChange={() => setSortByClear((v) => !v)} />
+              <span className={`relative inline-block w-9 h-5 rounded-full transition-colors duration-200 ${sortByClear ? "bg-indigo-600" : "bg-white/20"}`}>
+                <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 ${sortByClear ? "translate-x-4" : "translate-x-0"}`} />
+              </span>
+              램프순
+            </label>
           </div>
 
           {/* 범례 */}
