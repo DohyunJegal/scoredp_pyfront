@@ -31,7 +31,7 @@ function groupByUnofficialLevel(songs: SongItem[]) {
 
 export default function TierPage() {
   const [songs, setSongs] = useState<SongItem[]>([]);
-  const [level, setLevel] = useState<number | null>(null);
+  const [level, setLevel] = useState<number | null>(12);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
