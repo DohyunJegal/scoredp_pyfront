@@ -49,13 +49,13 @@ function SongCard({ item }: { item: ScoreItem }) {
   const chartStyle = CHART_STYLE[item.chart] ?? { color: "inherit", prefix: "" };
 
   return (
-    <div className="flex flex-row border border-white/10 rounded overflow-hidden h-14">
-      <div className="flex flex-col justify-between p-1.5 flex-1 min-w-0">
-        <span className="text-xs leading-tight line-clamp-2" style={{ color: chartStyle.color }}>
+    <div className="flex flex-row border border-white/10 rounded overflow-hidden h-12 sm:h-14">
+      <div className="flex flex-col justify-between p-1 sm:p-1.5 flex-1 min-w-0">
+        <span className="text-[10px] sm:text-xs leading-tight line-clamp-2" style={{ color: chartStyle.color }}>
           {chartStyle.prefix}{item.title}
         </span>
         {hasScore && (
-          <span className="text-[10px] text-white/50 font-mono">
+          <span className="text-[8px] sm:text-[10px] text-white/50 font-mono">
             {item.dj_level} {item.score.toLocaleString()}
           </span>
         )}
@@ -207,7 +207,7 @@ function ScoresContent() {
             ☆{lvKey}
             <span className="ml-2 text-white/30 font-normal">{items.length}곡</span>
           </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-1.5">
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-1.5">
             {items.map((item, i) => (
               <SongCard key={`${item.title}-${item.chart}-${i}`} item={item} />
             ))}

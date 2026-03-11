@@ -35,14 +35,20 @@ export default function TierPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    setLoading(true);
-    const url = new URL(`${API_URL}/songs`);
-    if (level) url.searchParams.set("level", String(level));
-    fetch(url.toString())
-      .then((r) => r.json())
-      .then(setSongs)
-      .catch(() => setSongs([]))
-      .finally(() => setLoading(false));
+    async function load() {
+      setLoading(true);
+      const url = new URL(`${API_URL}/songs`);
+      if (level) url.searchParams.set("level", String(level));
+      try {
+        const r = await fetch(url.toString());
+        setSongs(await r.json());
+      } catch {
+        setSongs([]);
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
   }, [level]);
 
   const groups = groupByUnofficialLevel(songs);
@@ -76,14 +82,14 @@ export default function TierPage() {
             ☆{lvKey}
             <span className="ml-2 text-white/30 font-normal">{items.length}곡</span>
           </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-1.5">
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-1.5">
             {items.map((item, i) => (
               <div
                 key={`${item.title}-${item.chart}-${i}`}
-                className="flex items-center p-2 border border-white/10 rounded h-12 min-w-0"
+                className="flex items-center p-1 sm:p-2 border border-white/10 rounded h-10 sm:h-12 min-w-0"
               >
                 <span
-                  className="text-xs leading-tight line-clamp-2"
+                  className="text-[10px] sm:text-xs leading-tight line-clamp-2"
                   style={{ color: CHART_STYLE[item.chart]?.color ?? "inherit" }}
                 >
                   {CHART_STYLE[item.chart]?.prefix}{item.title}
