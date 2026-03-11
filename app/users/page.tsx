@@ -46,9 +46,9 @@ export default function UsersPage() {
             <Link
               key={user.iidx_id}
               href={`/scores?id=${user.iidx_id}`}
-              className="flex flex-col gap-1 p-4 rounded-lg border border-white/10 hover:border-indigo-400 hover:bg-indigo-400/5 transition-all"
+              className="flex flex-col gap-1 p-2 sm:p-4 rounded-lg border border-white/10 hover:border-indigo-400 hover:bg-indigo-400/5 transition-all"
             >
-              <span className="font-semibold truncate">{user.dj_name}</span>
+              <span className="text-xs sm:text-base font-semibold">{user.dj_name}</span>
               <span className="text-xs text-white/40 font-mono">{user.iidx_id}</span>
             </Link>
           ))}
