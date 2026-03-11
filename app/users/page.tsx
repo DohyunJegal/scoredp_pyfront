@@ -41,7 +41,7 @@ export default function UsersPage() {
       {filtered.length === 0 ? (
         <p className="text-white/40 text-sm">검색 결과가 없습니다.</p>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 gap-3">
           {filtered.map((user) => (
             <Link
               key={user.iidx_id}

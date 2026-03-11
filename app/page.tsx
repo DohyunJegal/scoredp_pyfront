@@ -1,8 +1,20 @@
+"use client";
+
+import { useState } from "react";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 const bookmarklet = `javascript:$.getScript("${API_URL}/c");`;
 
 export default function HomePage() {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(bookmarklet).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
   return (
     <div className="flex flex-col gap-10 max-w-xl">
       <section>
@@ -25,9 +37,20 @@ export default function HomePage() {
             베이직 코스에 가입하지 않으셨다면, 가입을 진행합니다.
           </li>
           <li>
-            <code>{bookmarklet}</code> 를 콘솔에 입력합니다.
+            아래 코드를 콘솔에 입력합니다.
+            <div className="mt-2 flex items-center gap-2">
+              <code className="block flex-1 bg-white/5 border border-white/10 rounded px-3 py-2 text-xs font-mono break-all">
+                {bookmarklet}
+              </code>
+              <button
+                onClick={handleCopy}
+                className="shrink-0 px-3 py-2 rounded border border-white/20 bg-white/5 hover:bg-white/10 text-xs transition-colors"
+              >
+                {copied ? "완료" : "복사"}
+              </button>
+            </div>
           </li>
-          <li>크롤러가 정보를 수집해 서버에 전송합니다.</li> 
+          <li>크롤러가 정보를 수집해 서버에 전송합니다.</li>
         </ol>
       </section>
 
