@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState, useCallback, Suspense } from "react";
+import { useEffect, useState, useCallback, useRef, Suspense } from "react";
+import { toPng } from "html-to-image";
 import { useSearchParams, useRouter } from "next/navigation";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
@@ -88,6 +89,17 @@ function ScoresContent() {
   const [scores, setScores] = useState<ScoreItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const captureRef = useRef<HTMLDivElement>(null);
+
+  const handleCapture = () => {
+    if (!captureRef.current) return;
+    toPng(captureRef.current).then((url) => {
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `scoredp_${idParam}_${level}.png`;
+      a.click();
+    });
+  };
 
   const fetchScores = useCallback(async (id: string, lv: number | null) => {
     setLoading(true);
@@ -180,6 +192,16 @@ function ScoresContent() {
               </span>
               램프순
             </label>
+            <button
+              onClick={handleCapture}
+              title="이미지 저장"
+              className="p-1 text-white/40 hover:text-white/60 transition-colors"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0ZM18.75 10.5h.008v.008h-.008V10.5Z" />
+              </svg>
+            </button>
           </div>
 
           {/* 범례 */}
@@ -194,26 +216,50 @@ function ScoresContent() {
         </>
       )}
 
-      {loading && <p className="text-white/40 text-sm">불러오는 중…</p>}
+      {loading && <p className="text-white/40 text-sm">불러오는 중...</p>}
       {error && <p className="text-red-400 text-sm">{error}</p>}
 
       {hasResult && groups.length === 0 && (
         <p className="text-white/40 text-sm">스코어 데이터가 없습니다.</p>
       )}
 
-      {groups.map(([lvKey, items]) => (
-        <section key={lvKey} className="flex flex-col gap-2">
-          <h2 className="text-sm font-semibold text-indigo-300 border-b border-white/10 pb-1">
-            ☆{lvKey}
-            <span className="ml-2 text-white/30 font-normal">{items.length}곡</span>
-          </h2>
-          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-1.5">
-            {items.map((item, i) => (
-              <SongCard key={`${item.title}-${item.chart}-${i}`} item={item} />
-            ))}
+      {hasResult && scores.length > 0 && (
+        <div ref={captureRef} className="flex flex-col gap-6">
+          {/* 클리어 집계 바 */}
+          <div className="flex text-xs font-mono rounded overflow-hidden max-w-md">
+            {Object.entries(CLEAR_LABEL).sort((a, b) => Number(b[0]) - Number(a[0])).map(([ct, label]) => {
+              const count = scores.filter(s => s.clear_type === Number(ct)).length;
+              return (
+                <div
+                  key={ct}
+                  className="flex items-center justify-center py-0.5 overflow-hidden whitespace-nowrap min-w-[1.5rem]"
+                  style={{ background: CLEAR_COLOR[Number(ct)], color: "#111", flexGrow: count, flexBasis: 0 }}
+                  title={`${label}: ${count}`}
+                >
+                  {count}
+                </div>
+              );
+            })}
+            <div className="flex items-center justify-center px-2 py-0.5 shrink-0 bg-white/10 text-white/50">
+              {scores.length}
+            </div>
           </div>
-        </section>
-      ))}
+
+          {groups.map(([lvKey, items]) => (
+            <section key={lvKey} className="flex flex-col gap-2">
+              <h2 className="text-sm font-semibold text-indigo-300 border-b border-white/10 pb-1">
+                ☆{lvKey}
+                <span className="ml-2 text-white/30 font-normal">{items.length}곡</span>
+              </h2>
+              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-1.5">
+                {items.map((item, i) => (
+                  <SongCard key={`${item.title}-${item.chart}-${i}`} item={item} />
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
