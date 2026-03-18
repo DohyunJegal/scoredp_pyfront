@@ -93,7 +93,7 @@ function ScoresContent() {
 
   const handleCapture = () => {
     if (!captureRef.current) return;
-    toPng(captureRef.current, { backgroundColor: "#0f0f1a" }).then((url) => {
+    toPng(captureRef.current, { backgroundColor: "#0f0f1a", pixelRatio: 4 }).then((url) => {
       const a = document.createElement("a");
       a.href = url;
       a.download = `scoredp_${idParam}_${level}.png`;
