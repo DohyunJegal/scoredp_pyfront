@@ -20,6 +20,21 @@ interface UserEntry {
   score_count: number;
 }
 
+interface ScoreEntry {
+  id: number;
+  song_title: string;
+  chart: string;
+  level: number;
+  clear_type: number;
+  score: number;
+  dj_level: string;
+  updated_at: string | null;
+}
+
+const CLEAR_LABELS: Record<number, string> = {
+  1: "FAILED", 2: "ASSIST", 3: "EASY", 4: "CLEAR", 5: "HARD", 6: "EX-HARD", 7: "FC",
+};
+
 const CHARTS = ["HYPER", "ANOTHER", "LEGGENDARIA"];
 
 // ── 곡 편집 행 ────────────────────────────────────────────
@@ -87,7 +102,7 @@ function SongRow({ song, adminKey, onSaved }: { song: Song; adminKey: string; on
       </td>
       <td className="px-3 py-1.5">
         <select
-          className="bg-white/10 rounded px-1 py-0.5 text-xs focus:outline-none"
+          className="bg-zinc-800 text-white rounded px-1 py-0.5 text-xs focus:outline-none border border-white/20"
           value={form.chart}
           onChange={(e) => setForm({ ...form, chart: e.target.value })}
         >
@@ -111,7 +126,8 @@ function SongRow({ song, adminKey, onSaved }: { song: Song; adminKey: string; on
           onChange={(e) => setForm({ ...form, unofficial_level: e.target.value })}
         />
       </td>
-      <td className="px-3 py-1.5 flex gap-1">
+      <td className="px-3 py-1.5 w-32">
+        <div className="flex gap-1 whitespace-nowrap">
         <button
           onClick={save}
           disabled={saving}
@@ -125,6 +141,7 @@ function SongRow({ song, adminKey, onSaved }: { song: Song; adminKey: string; on
         >
           취소
         </button>
+        </div>
       </td>
     </tr>
   );
@@ -137,7 +154,7 @@ export default function AdminPage() {
   const [authError, setAuthError] = useState(false);
   const [authChecking, setAuthChecking] = useState(false);
 
-  const [tab, setTab] = useState<"songs" | "users">("songs");
+  const [tab, setTab] = useState<"songs" | "users" | "scores">("songs");
 
   // 곡 관리
   const [songs, setSongs] = useState<Song[]>([]);
@@ -154,6 +171,12 @@ export default function AdminPage() {
   const [usersLoading, setUsersLoading] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
 
+  // 기록 관리
+  const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
+  const [scores, setScores] = useState<ScoreEntry[]>([]);
+  const [scoresLoading, setScoresLoading] = useState(false);
+  const [scoreDeleteConfirm, setScoreDeleteConfirm] = useState<number | null>(null);
+
   // sessionStorage에서 키 복원
   useEffect(() => {
     const saved = sessionStorage.getItem("adminKey");
@@ -163,9 +186,24 @@ export default function AdminPage() {
   useEffect(() => {
     if (!adminKey) return;
     if (tab === "songs" && songs.length === 0) loadSongs();
-    if (tab === "users" && users.length === 0) loadUsers();
+    if ((tab === "users" || tab === "scores") && users.length === 0) loadUsers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab, adminKey]);
+
+  // 유저 선택 시 기록 로드
+  useEffect(() => {
+    if (selectedUserId === null) { setScores([]); return; }
+    setScoresLoading(true);
+    setScoreDeleteConfirm(null);
+    fetch(`${API_URL}/admin/users/${selectedUserId}/scores`, {
+      headers: { "X-Admin-Key": adminKey! },
+    })
+      .then((r) => r.json())
+      .then((data) => setScores(data))
+      .catch(() => setScores([]))
+      .finally(() => setScoresLoading(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedUserId]);
 
   const handleLogin = async () => {
     setAuthChecking(true);
@@ -270,6 +308,24 @@ export default function AdminPage() {
     setDeleteConfirm(null);
   };
 
+  const handleDeleteScore = async (scoreId: number) => {
+    if (!confirm("이 기록을 삭제하겠습니까? 이 작업은 취소할 수 없습니다.")) {
+      setScoreDeleteConfirm(null);
+      return;
+    }
+    const res = await fetch(`${API_URL}/admin/scores/${scoreId}`, {
+      method: "DELETE",
+      headers: { "X-Admin-Key": adminKey! },
+    });
+    if (res.ok) {
+      setScores((prev) => prev.filter((s) => s.id !== scoreId));
+      setUsers((prev) =>
+        prev.map((u) => u.id === selectedUserId ? { ...u, score_count: u.score_count - 1 } : u)
+      );
+    }
+    setScoreDeleteConfirm(null);
+  };
+
   const toggleSort = (key: typeof sortKey) => {
     if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
     else { setSortKey(key); setSortDir("asc"); }
@@ -291,6 +347,12 @@ export default function AdminPage() {
       const cmp = va < vb ? -1 : va > vb ? 1 : 0;
       return sortDir === "asc" ? cmp : -cmp;
     });
+
+  const TAB_LABELS: Record<"songs" | "users" | "scores", string> = {
+    songs: "곡 관리",
+    users: "유저 관리",
+    scores: "기록 관리",
+  };
 
   // ── 비밀번호 화면 ──────────────────────────────────────
   if (!adminKey) {
@@ -333,7 +395,7 @@ export default function AdminPage() {
 
       {/* 탭 */}
       <div className="flex gap-1 border-b border-white/10">
-        {(["songs", "users"] as const).map((t) => (
+        {(["songs", "users", "scores"] as const).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
@@ -343,7 +405,7 @@ export default function AdminPage() {
                 : "border-transparent text-white/40 hover:text-white/70"
             }`}
           >
-            {t === "songs" ? "곡 관리" : "유저 관리"}
+            {TAB_LABELS[t]}
           </button>
         ))}
       </div>
@@ -410,7 +472,7 @@ export default function AdminPage() {
                         ) : label}
                       </th>
                     ))}
-                    <th className="px-3 py-2 w-20" />
+                    <th className="px-3 py-2 w-32" />
                   </tr>
                 </thead>
                 <tbody>
@@ -443,7 +505,7 @@ export default function AdminPage() {
                   <th className="px-3 py-2 text-left font-normal">IIDX ID</th>
                   <th className="px-3 py-2 text-left font-normal">DJ명</th>
                   <th className="px-3 py-2 text-center font-normal w-20">스코어</th>
-                  <th className="px-3 py-2 w-20" />
+                  <th className="px-3 py-2 w-32" />
                 </tr>
               </thead>
               <tbody>
@@ -452,9 +514,9 @@ export default function AdminPage() {
                     <td className="px-3 py-2 font-mono text-xs text-white/60">{user.iidx_id}</td>
                     <td className="px-3 py-2">{user.dj_name}</td>
                     <td className="px-3 py-2 text-center text-white/40 text-xs">{user.score_count}</td>
-                    <td className="px-3 py-2">
+                    <td className="px-3 py-2 w-32">
                       {deleteConfirm === user.id ? (
-                        <div className="flex gap-1">
+                        <div className="flex gap-1 whitespace-nowrap">
                           <button
                             onClick={() => handleDeleteUser(user.id)}
                             className="text-xs px-2 py-0.5 rounded bg-red-600 hover:bg-red-500 transition-colors"
@@ -481,6 +543,94 @@ export default function AdminPage() {
                 ))}
               </tbody>
             </table>
+          )}
+        </div>
+      )}
+
+      {/* ── 기록 관리 ── */}
+      {tab === "scores" && (
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center gap-3">
+            <select
+              value={selectedUserId ?? ""}
+              onChange={(e) => setSelectedUserId(e.target.value ? Number(e.target.value) : null)}
+              className="px-3 py-1.5 rounded border border-white/20 bg-zinc-800 text-white text-sm focus:outline-none focus:border-indigo-400"
+            >
+              <option value="">유저 선택</option>
+              {users.map((u) => (
+                <option key={u.id} value={u.id}>
+                  {u.dj_name} ({u.iidx_id})
+                </option>
+              ))}
+            </select>
+            {selectedUserId !== null && !scoresLoading && (
+              <span className="text-xs text-white/30">{scores.length}개 기록</span>
+            )}
+          </div>
+
+          {selectedUserId === null ? (
+            <p className="text-white/30 text-sm">유저를 선택하면 기록이 표시됩니다.</p>
+          ) : scoresLoading ? (
+            <p className="text-white/40 text-sm">불러오는 중…</p>
+          ) : scores.length === 0 ? (
+            <p className="text-white/30 text-sm">기록이 없습니다.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-white/10 text-white/40 text-xs">
+                    <th className="px-3 py-2 text-left font-normal">곡명</th>
+                    <th className="px-3 py-2 text-left font-normal w-28">차트</th>
+                    <th className="px-3 py-2 text-center font-normal w-12">Lv</th>
+                    <th className="px-3 py-2 text-center font-normal w-20">클리어</th>
+                    <th className="px-3 py-2 text-center font-normal w-24">스코어</th>
+                    <th className="px-3 py-2 text-center font-normal w-14">DJ Lv</th>
+                    <th className="px-3 py-2 w-32" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {scores.map((sc) => (
+                    <tr key={sc.id} className="border-b border-white/5 hover:bg-white/5">
+                      <td className="px-3 py-1.5">{sc.song_title}</td>
+                      <td className="px-3 py-1.5 text-xs text-white/50">{sc.chart}</td>
+                      <td className="px-3 py-1.5 text-xs text-center text-white/50">{sc.level}</td>
+                      <td className="px-3 py-1.5 text-xs text-center text-white/70">
+                        {CLEAR_LABELS[sc.clear_type] ?? sc.clear_type}
+                      </td>
+                      <td className="px-3 py-1.5 text-xs text-center font-mono">
+                        {sc.score.toLocaleString()}
+                      </td>
+                      <td className="px-3 py-1.5 text-xs text-center text-white/50">{sc.dj_level}</td>
+                      <td className="px-3 py-1.5 w-32">
+                        {scoreDeleteConfirm === sc.id ? (
+                          <div className="flex gap-1 whitespace-nowrap">
+                            <button
+                              onClick={() => handleDeleteScore(sc.id)}
+                              className="text-xs px-2 py-0.5 rounded bg-red-600 hover:bg-red-500 transition-colors"
+                            >
+                              확인
+                            </button>
+                            <button
+                              onClick={() => setScoreDeleteConfirm(null)}
+                              className="text-xs px-2 py-0.5 rounded border border-white/20 hover:border-white/40 transition-colors"
+                            >
+                              취소
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => setScoreDeleteConfirm(sc.id)}
+                            className="text-xs px-2 py-0.5 rounded border border-red-500/40 text-red-400 hover:border-red-500 transition-colors"
+                          >
+                            삭제
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
       )}
