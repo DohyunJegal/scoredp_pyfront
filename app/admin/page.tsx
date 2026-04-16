@@ -23,7 +23,7 @@ interface UserEntry {
 const CHARTS = ["HYPER", "ANOTHER", "LEGGENDARIA"];
 
 // ── 곡 편집 행 ────────────────────────────────────────────
-function SongRow({ song, onSaved }: { song: Song; onSaved: (s: Song) => void }) {
+function SongRow({ song, adminKey, onSaved }: { song: Song; adminKey: string; onSaved: (s: Song) => void }) {
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({
     title: song.title,
@@ -37,7 +37,7 @@ function SongRow({ song, onSaved }: { song: Song; onSaved: (s: Song) => void }) 
     setSaving(true);
     const res = await fetch(`${API_URL}/admin/songs/${song.id}`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "X-Admin-Key": adminKey },
       body: JSON.stringify({
         title: form.title,
         chart: form.chart,
@@ -132,6 +132,11 @@ function SongRow({ song, onSaved }: { song: Song; onSaved: (s: Song) => void }) 
 
 // ── 메인 페이지 ───────────────────────────────────────────
 export default function AdminPage() {
+  const [adminKey, setAdminKey] = useState<string | null>(null);
+  const [keyInput, setKeyInput] = useState("");
+  const [authError, setAuthError] = useState(false);
+  const [authChecking, setAuthChecking] = useState(false);
+
   const [tab, setTab] = useState<"songs" | "users">("songs");
 
   // 곡 관리
@@ -139,6 +144,7 @@ export default function AdminPage() {
   const [songQuery, setSongQuery] = useState("");
   const [songsLoading, setSongsLoading] = useState(false);
   const [importResult, setImportResult] = useState<string | null>(null);
+  const [fetching, setFetching] = useState(false);
   const importRef = useRef<HTMLInputElement>(null);
   const [sortKey, setSortKey] = useState<"id" | "title" | "level" | "unofficial_level">("id");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
@@ -148,28 +154,70 @@ export default function AdminPage() {
   const [usersLoading, setUsersLoading] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
 
+  // sessionStorage에서 키 복원
   useEffect(() => {
+    const saved = sessionStorage.getItem("adminKey");
+    if (saved) setAdminKey(saved);
+  }, []);
+
+  useEffect(() => {
+    if (!adminKey) return;
     if (tab === "songs" && songs.length === 0) loadSongs();
     if (tab === "users" && users.length === 0) loadUsers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tab]);
+  }, [tab, adminKey]);
+
+  const handleLogin = async () => {
+    setAuthChecking(true);
+    setAuthError(false);
+    const res = await fetch(`${API_URL}/admin/songs`, {
+      headers: { "X-Admin-Key": keyInput },
+    }).catch(() => null);
+    setAuthChecking(false);
+    if (res?.ok) {
+      sessionStorage.setItem("adminKey", keyInput);
+      setAdminKey(keyInput);
+    } else {
+      setAuthError(true);
+    }
+  };
+
+  const handleLogout = () => {
+    sessionStorage.removeItem("adminKey");
+    setAdminKey(null);
+    setKeyInput("");
+  };
 
   const loadSongs = async () => {
     setSongsLoading(true);
-    const data = await fetch(`${API_URL}/admin/songs`).then((r) => r.json()).catch(() => []);
+    const data = await fetch(`${API_URL}/admin/songs`, {
+      headers: { "X-Admin-Key": adminKey! },
+    }).then((r) => r.json()).catch(() => []);
     setSongs(data);
     setSongsLoading(false);
   };
 
   const loadUsers = async () => {
     setUsersLoading(true);
-    const data = await fetch(`${API_URL}/admin/users`).then((r) => r.json()).catch(() => []);
+    const data = await fetch(`${API_URL}/admin/users`, {
+      headers: { "X-Admin-Key": adminKey! },
+    }).then((r) => r.json()).catch(() => []);
     setUsers(data);
     setUsersLoading(false);
   };
 
-  const handleExport = () => {
-    window.location.href = `${API_URL}/admin/songs/export`;
+  const handleExport = async () => {
+    const res = await fetch(`${API_URL}/admin/songs/export`, {
+      headers: { "X-Admin-Key": adminKey! },
+    });
+    if (!res.ok) return;
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "songs.xlsx";
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -177,10 +225,14 @@ export default function AdminPage() {
     if (!file) return;
     const form = new FormData();
     form.append("file", file);
-    const res = await fetch(`${API_URL}/admin/songs/import`, { method: "POST", body: form });
+    const res = await fetch(`${API_URL}/admin/songs/import`, {
+      method: "POST",
+      headers: { "X-Admin-Key": adminKey! },
+      body: form,
+    });
     if (res.ok) {
-      const { updated, skipped } = await res.json();
-      setImportResult(`완료: ${updated}곡 수정, ${skipped}곡 건너뜀`);
+      const { updated, added, skipped } = await res.json();
+      setImportResult(`완료: ${updated}곡 수정, ${added}곡 추가, ${skipped}곡 건너뜀`);
       await loadSongs();
     } else {
       setImportResult("오류가 발생했습니다.");
@@ -188,8 +240,30 @@ export default function AdminPage() {
     e.target.value = "";
   };
 
+  const handleFetchZasa = async () => {
+    if (!confirm("동기화를 수행합니까? 기존 데이터가 모두 변경될 수 있습니다.")) return;
+    setFetching(true);
+    setImportResult(null);
+    const res = await fetch(`${API_URL}/admin/songs/fetch-zasa`, {
+      method: "POST",
+      headers: { "X-Admin-Key": adminKey! },
+    });
+    if (res.ok) {
+      const { updated, added } = await res.json();
+      setImportResult(`zasa 동기화 완료: ${updated}곡 수정, ${added}곡 추가`);
+      await loadSongs();
+    } else {
+      setImportResult("zasa 동기화 실패");
+    }
+    setFetching(false);
+  };
+
   const handleDeleteUser = async (userId: number) => {
-    const res = await fetch(`${API_URL}/admin/users/${userId}`, { method: "DELETE" });
+    if (!confirm("해당 유저 데이터를 삭제하겠습니까? 해당 작업은 취소가 불가합니다.")) return;
+    const res = await fetch(`${API_URL}/admin/users/${userId}`, {
+      method: "DELETE",
+      headers: { "X-Admin-Key": adminKey! },
+    });
     if (res.ok) {
       setUsers((prev) => prev.filter((u) => u.id !== userId));
     }
@@ -218,9 +292,44 @@ export default function AdminPage() {
       return sortDir === "asc" ? cmp : -cmp;
     });
 
+  // ── 비밀번호 화면 ──────────────────────────────────────
+  if (!adminKey) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+        <h1 className="text-2xl font-bold">관리자 인증</h1>
+        <div className="flex gap-2">
+          <input
+            type="password"
+            value={keyInput}
+            onChange={(e) => setKeyInput(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleLogin()}
+            placeholder="비밀번호"
+            className="px-3 py-2 rounded border border-white/20 bg-white/5 text-sm focus:outline-none focus:border-indigo-400"
+          />
+          <button
+            onClick={handleLogin}
+            disabled={authChecking || !keyInput}
+            className="px-4 py-2 rounded bg-indigo-600 hover:bg-indigo-500 text-sm transition-colors disabled:opacity-50"
+          >
+            {authChecking ? "확인 중…" : "확인"}
+          </button>
+        </div>
+        {authError && <p className="text-red-400 text-sm">비밀번호가 올바르지 않습니다.</p>}
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-bold">관리자</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">관리자</h1>
+        <button
+          onClick={handleLogout}
+          className="text-xs px-3 py-1.5 rounded border border-white/20 hover:border-white/40 text-white/40 hover:text-white/70 transition-colors"
+        >
+          로그아웃
+        </button>
+      </div>
 
       {/* 탭 */}
       <div className="flex gap-1 border-b border-white/10">
@@ -262,6 +371,13 @@ export default function AdminPage() {
             >
               Excel 업로드
             </button>
+            <button
+              onClick={handleFetchZasa}
+              disabled={fetching}
+              className="px-3 py-1.5 rounded border border-white/20 hover:border-indigo-400 text-sm transition-colors disabled:opacity-50"
+            >
+              {fetching ? "동기화 중…" : "zasa 동기화"}
+            </button>
             <input ref={importRef} type="file" accept=".xlsx" className="hidden" onChange={handleImport} />
             {importResult && (
               <span className="text-sm text-indigo-300">{importResult}</span>
@@ -302,6 +418,7 @@ export default function AdminPage() {
                     <SongRow
                       key={song.id}
                       song={song}
+                      adminKey={adminKey}
                       onSaved={(updated) =>
                         setSongs((prev) => prev.map((s) => (s.id === updated.id ? updated : s)))
                       }
