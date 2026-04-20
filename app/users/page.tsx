@@ -13,12 +13,14 @@ interface User {
 export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [query, setQuery] = useState("");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetch(`${API_URL}/users`)
       .then((r) => r.json())
       .then(setUsers)
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
 
   const filtered = users.filter((u) => {
@@ -38,7 +40,9 @@ export default function UsersPage() {
         className="px-3 py-1.5 rounded border border-white/20 bg-white/5 text-sm w-64 focus:outline-none focus:border-indigo-400"
       />
 
-      {filtered.length === 0 ? (
+      {loading ? (
+        <p className="text-white/40 text-sm">데이터를 가져오는 중...</p>
+      ) : filtered.length === 0 ? (
         <p className="text-white/40 text-sm">검색 결과가 없습니다.</p>
       ) : (
         <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 gap-3">

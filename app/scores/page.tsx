@@ -108,7 +108,7 @@ function ScoresContent() {
       const url = new URL(`${API_URL}/scores/${encodeURIComponent(id)}`);
       if (lv) url.searchParams.set("level", String(lv));
       const res = await fetch(url.toString());
-      if (res.status === 404) throw new Error("사용자를 찾을 수 없습니다.");
+      if (res.status === 404) throw new Error("사용자를 찾을 수 없어요.");
       if (!res.ok) throw new Error("서버 오류가 발생했습니다.");
       setScores(await res.json());
     } catch (e) {
@@ -216,11 +216,11 @@ function ScoresContent() {
         </>
       )}
 
-      {loading && <p className="text-white/40 text-sm">불러오는 중...</p>}
+      {loading && <p className="text-white/40 text-sm">데이터를 가져오는 중...</p>}
       {error && <p className="text-red-400 text-sm">{error}</p>}
 
       {hasResult && groups.length === 0 && (
-        <p className="text-white/40 text-sm">스코어 데이터가 없습니다.</p>
+        <p className="text-white/40 text-sm">스코어 데이터가 비어있어요.</p>
       )}
 
       {hasResult && scores.length > 0 && (

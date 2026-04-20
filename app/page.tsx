@@ -60,6 +60,16 @@ export default function HomePage() {
           DP 서열표 사이트
         </a>
       </section>
+
+      <section className="flex flex-col gap-3">
+        <h2 className="text-lg font-semibold">기타</h2>
+        <a href="https://ereter.net/" target="_blank" className="text-indigo-400 underline">
+          ereter.net
+        </a>
+        <a href="https://open.kakao.com/o/sHxDbXrh" target="_blank" className="text-indigo-400 underline">
+          개발자 코인 넣어주기 (카카오톡 오픈채팅)
+        </a>
+      </section>
     </div>
   );
 }

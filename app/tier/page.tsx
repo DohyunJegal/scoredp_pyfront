@@ -74,7 +74,7 @@ export default function TierPage() {
         ))}
       </div>
 
-      {loading && <p className="text-white/40 text-sm">불러오는 중…</p>}
+      {loading && <p className="text-white/40 text-sm">데이터를 가져오는 중...</p>}
 
       {groups.map(([lvKey, items]) => (
         <section key={lvKey} className="flex flex-col gap-2">
