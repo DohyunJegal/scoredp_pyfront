@@ -67,7 +67,7 @@ export default function HomePage() {
           ereter.net
         </a>
         <a href="https://open.kakao.com/o/sHxDbXrh" target="_blank" className="text-indigo-400 underline">
-          개발자 코인 넣어주기 (카카오톡 오픈채팅)
+          불쌍한 개발자에게 한 푼 줘야지 (카카오톡 오픈채팅)
         </a>
       </section>
     </div>
