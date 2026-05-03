@@ -20,6 +20,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <Link href="/users" className="hover:text-white transition-colors">사용자</Link>
             <Link href="/scores" className="hover:text-white transition-colors">기록</Link>
             <Link href="/tier" className="hover:text-white transition-colors">서열표</Link>
+            <Link href="/random" className="hover:text-white transition-colors">랜덤</Link>
           </nav>
         </header>
         <main className="flex-1 px-6 py-8 max-w-6xl mx-auto w-full min-w-[344px]">
