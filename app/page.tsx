@@ -56,17 +56,20 @@ export default function HomePage() {
 
       <section className="flex flex-col gap-3">
         <h2 className="text-lg font-semibold">참고</h2>
-        <a href="https://zasa.sakura.ne.jp/dp/" target="_blank" className="text-indigo-400 underline">
+        <a href="https://zasa.sakura.ne.jp/dp/" target="_blank" className="text-indigo-400">
           DP 서열표 사이트
         </a>
       </section>
 
       <section className="flex flex-col gap-3">
         <h2 className="text-lg font-semibold">기타</h2>
-        <a href="https://ereter.net/" target="_blank" className="text-indigo-400 underline">
+        <a href="https://ereter.net/" target="_blank" className="text-indigo-400">
           ereter.net
         </a>
-        <a href="https://open.kakao.com/o/sHxDbXrh" target="_blank" className="text-indigo-400 underline">
+        <a href="https://dpoptionz.vercel.app/" target="_blank" className="text-indigo-400">
+          Double Play Optionz - DP 배치 추천 사이트
+        </a>
+        <a href="https://open.kakao.com/o/sHxDbXrh" target="_blank" className="text-indigo-400">
           불쌍한 개발자에게 한 푼 줘야지 (카카오톡 오픈채팅)
         </a>
       </section>
