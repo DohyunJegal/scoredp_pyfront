@@ -66,7 +66,7 @@ export default function HomePage() {
         <a href="https://ereter.net/" target="_blank" className="text-indigo-400">
           ereter.net
         </a>
-        <a href="/fakereter.html" target="_blank" className="text-indigo-400">
+        <a href="https://ohsorry.vercel.app/" target="_blank" className="text-indigo-400">
           짭레터넷 - DP 점수 / 추천 계산기 by grom
         </a>
         <a href="https://dpoptionz.vercel.app/" target="_blank" className="text-indigo-400">
