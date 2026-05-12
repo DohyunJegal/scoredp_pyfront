@@ -57,7 +57,7 @@ export default function HomePage() {
       <section className="flex flex-col gap-3">
         <h2 className="text-lg font-semibold">참고</h2>
         <a href="https://zasa.sakura.ne.jp/dp/" target="_blank" className="text-indigo-400">
-          DP 서열표 사이트
+          DP 비공식 난이도표 사이트
         </a>
       </section>
 
@@ -67,7 +67,7 @@ export default function HomePage() {
           ereter.net
         </a>
         <a href="https://ohsorry.vercel.app/" target="_blank" className="text-indigo-400">
-          짭레터넷 - DP 리커멘드 점수 계산기 / 추천곡 자판기 by grom
+          오소리넷 - DP 리커멘드 점수 계산기 / 추천곡 자판기 by grom
         </a>
         <a href="https://dpoptionz.vercel.app/" target="_blank" className="text-indigo-400">
           Double Play Optionz - DP 배치 추천 사이트 by 𝔸𝕁(DXR*00)
