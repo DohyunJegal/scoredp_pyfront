@@ -48,9 +48,23 @@ function SongCard({ item }: { item: ScoreItem }) {
   const color = CLEAR_COLOR[item.clear_type] ?? "bg-zinc-800";
   const hasScore = item.score > 0;
   const chartStyle = CHART_STYLE[item.chart] ?? { color: "inherit", prefix: "" };
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(item.title.trim()).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    });
+  };
 
   return (
-    <div className="flex flex-row border border-white/10 rounded overflow-hidden h-12 sm:h-14">
+    <>
+      {copied && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-white/10 backdrop-blur text-white text-xs px-4 py-2 rounded-full pointer-events-none">
+          곡명이 복사되었어요
+        </div>
+      )}
+    <div className="flex flex-row border border-white/10 rounded overflow-hidden h-12 sm:h-14 active:opacity-70" onClick={handleCopy}>
       <div className="flex flex-col justify-between p-1 sm:p-1.5 flex-1 min-w-0">
         <span className="text-[10px] sm:text-xs leading-tight line-clamp-2" style={{ color: chartStyle.color }}>
           {chartStyle.prefix}{item.title}
@@ -65,6 +79,7 @@ function SongCard({ item }: { item: ScoreItem }) {
         <div className="w-2 shrink-0" style={{ background: color }} title={CLEAR_LABEL[item.clear_type]} />
       )}
     </div>
+    </>
   );
 }
 
@@ -175,7 +190,7 @@ function ScoresContent() {
             {LEVELS.map((lv) => (
               <button
                 key={lv}
-                onClick={() => setLevel(lv === level ? null : lv)}
+                onClick={() => setLevel(lv)}
                 className={`px-3 py-1 rounded text-sm border transition-colors cursor-pointer ${
                   level === lv
                     ? "bg-indigo-600 border-indigo-600"
