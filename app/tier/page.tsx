@@ -33,6 +33,14 @@ export default function TierPage() {
   const [songs, setSongs] = useState<SongItem[]>([]);
   const [level, setLevel] = useState<number | null>(12);
   const [loading, setLoading] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = (title: string) => {
+    navigator.clipboard.writeText(title.trim()).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    });
+  };
 
   useEffect(() => {
     async function load() {
@@ -55,6 +63,11 @@ export default function TierPage() {
 
   return (
     <div className="flex flex-col gap-6">
+      {copied && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-white/10 backdrop-blur text-white text-xs px-4 py-2 rounded-full pointer-events-none">
+          곡명이 복사되었어요
+        </div>
+      )}
       <h1 className="text-2xl font-bold">서열표</h1>
 
       {/* 레벨 필터 */}
@@ -86,7 +99,8 @@ export default function TierPage() {
             {items.map((item, i) => (
               <div
                 key={`${item.title}-${item.chart}-${i}`}
-                className="flex items-center p-1 sm:p-2 border border-white/10 rounded h-10 sm:h-12 min-w-0"
+                className="flex items-center p-1 sm:p-2 border border-white/10 rounded h-10 sm:h-12 min-w-0 active:opacity-70"
+                onClick={() => handleCopy(item.title)}
               >
                 <span
                   className="text-[10px] sm:text-xs leading-tight line-clamp-2"
