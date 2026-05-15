@@ -62,7 +62,7 @@ export default function TierPage() {
         {LEVELS.map((lv) => (
           <button
             key={lv}
-            onClick={() => setLevel(lv === level ? null : lv)}
+            onClick={() => setLevel(lv)}
             className={`px-3 py-1 rounded text-sm border transition-colors ${
               level === lv
                 ? "bg-indigo-600 border-indigo-600"
