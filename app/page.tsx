@@ -7,12 +7,12 @@ const bookmarklet = `javascript:$.getScript("${API_URL}/c");`;
 const bookmarklet_p = `javascript:$.getScript("${API_URL}/p");`;
 
 export default function HomePage() {
-  const [copied, setCopied] = useState(false);
+  const [copiedType, setCopiedType] = useState<string | null>(null);
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(bookmarklet).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+  const handleCopy = (text: string, type: string) => {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopiedType(type);
+      setTimeout(() => setCopiedType(null), 2000);
     });
   };
 
@@ -44,10 +44,10 @@ export default function HomePage() {
                 {bookmarklet}
               </code>
               <button
-                onClick={handleCopy}
+                onClick={() => handleCopy(bookmarklet, "c")}
                 className="shrink-0 px-3 py-2 rounded border border-white/20 bg-white/5 hover:bg-white/10 text-xs transition-colors"
               >
-                {copied ? "완료" : "복사"}
+                {copiedType === "c" ? "완료" : "복사"}
               </button>
             </div>
           </li>
@@ -71,10 +71,10 @@ export default function HomePage() {
                 {bookmarklet_p}
               </code>
               <button
-                onClick={handleCopy}
+                onClick={() => handleCopy(bookmarklet_p, "p")}
                 className="shrink-0 px-3 py-2 rounded border border-white/20 bg-white/5 hover:bg-white/10 text-xs transition-colors"
               >
-                {copied ? "완료" : "복사"}
+                {copiedType === "p" ? "완료" : "복사"}
               </button>
             </div>
           </li>
