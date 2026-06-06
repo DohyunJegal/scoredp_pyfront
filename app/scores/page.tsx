@@ -24,7 +24,7 @@ interface OptionItem {
   right_arr: number;
 }
 
-const ARR_LABEL = ['-', 'M', 'R', 'RR', 'S'];
+const ARR_LABEL = ['-', 'M', 'R', 'RR', 'SR'];
 
 function formatOption(opt: OptionItem): string {
   const flip = opt.flip ? 'F ' : '';
