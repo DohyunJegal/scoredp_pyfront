@@ -4,6 +4,7 @@ import { useState } from "react";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 const bookmarklet = `javascript:$.getScript("${API_URL}/c");`;
+const bookmarklet_p = `javascript:$.getScript("${API_URL}/p");`;
 
 export default function HomePage() {
   const [copied, setCopied] = useState(false);
@@ -37,7 +38,7 @@ export default function HomePage() {
             베이직 코스에 가입하지 않으셨다면, 가입을 진행합니다.
           </li>
           <li>
-            아래 코드를 콘솔에 입력합니다.
+            페이지에서 f12를 누른 뒤, 콘솔에 아래 코드를 입력합니다.
             <div className="mt-2 flex items-center gap-2">
               <code className="block flex-1 bg-white/5 border border-white/10 rounded px-3 py-2 text-xs font-mono break-all">
                 {bookmarklet}
@@ -55,13 +56,42 @@ export default function HomePage() {
       </section>
 
       <section className="flex flex-col gap-3">
+        <h2 className="text-lg font-semibold">배치 기록 방법</h2>
+        <ol className="list-decimal list-inside flex flex-col gap-2 text-sm text-white/80 leading-relaxed">
+          <li>
+            <a href="https://p.eagate.573.jp" target="_blank" className="text-indigo-400 underline">
+              e-amusement
+            </a>
+            에 로그인합니다.
+          </li>
+          <li>
+            페이지에서 f12를 누른 뒤, 콘솔에 아래 코드를 입력합니다.
+            <div className="mt-2 flex items-center gap-2">
+              <code className="block flex-1 bg-white/5 border border-white/10 rounded px-3 py-2 text-xs font-mono break-all">
+                {bookmarklet_p}
+              </code>
+              <button
+                onClick={handleCopy}
+                className="shrink-0 px-3 py-2 rounded border border-white/20 bg-white/5 hover:bg-white/10 text-xs transition-colors"
+              >
+                {copied ? "완료" : "복사"}
+              </button>
+            </div>
+          </li>
+          <li>비밀번호를 설정합니다.</li>
+          <li>자신의 기록 페이지로 이동하여, 배치 저장 모드를 누르고 비밀번호를 입력합니다.</li>
+          <li>곡을 선택한 뒤 배치를 저장합니다.</li>
+        </ol>
+      </section>
+
+      <section className="flex flex-col gap-3">
         <h2 className="text-lg font-semibold">참고</h2>
         <a href="https://zasa.sakura.ne.jp/dp/" target="_blank" className="text-indigo-400">
           DP 비공식 난이도표 사이트
         </a>
       </section>
 
-      <section className="flex flex-col gap-3">
+      <section className="flex flex-col gap-3 mb-4">
         <h2 className="text-lg font-semibold">기타</h2>
         <a href="https://ereter.net/" target="_blank" className="text-indigo-400">
           ereter.net
