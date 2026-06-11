@@ -259,6 +259,7 @@ function ScoresContent() {
   const [showPwPrompt, setShowPwPrompt] = useState(false);
   const [editSong, setEditSong] = useState<ScoreItem | null>(null);
   const [hasPassword, setHasPassword] = useState(false);
+  const [djName, setDjName] = useState<string | null>(null);
   const captureRef = useRef<HTMLDivElement>(null);
 
   const handleCapture = () => {
@@ -345,8 +346,9 @@ function ScoresContent() {
         setOptionMap(new Map(data.map(o => [o.song_id, o])));
       }
       if (statusRes.ok) {
-        const { has_password } = await statusRes.json();
+        const { has_password, dj_name } = await statusRes.json();
         setHasPassword(has_password);
+        setDjName(dj_name);
         if (!has_password) { setEditMode(false); setSavedPassword(null); }
       }
     } catch {
@@ -452,16 +454,6 @@ function ScoresContent() {
               </button>
             )}
           </div>
-
-          {/* 범례 */}
-          <div className="flex gap-3 flex-wrap text-xs text-white/50">
-            {Object.entries(CLEAR_LABEL).sort((a, b) => Number(b[0]) - Number(a[0])).map(([ct, label]) => (
-              <span key={ct} className="flex items-center gap-1">
-                <span className="inline-block w-2 h-2 rounded-sm" style={{ background: CLEAR_COLOR[Number(ct)] }} />
-                {label}
-              </span>
-            ))}
-          </div>
         </>
       )}
 
@@ -503,6 +495,22 @@ function ScoresContent() {
 
       {hasResult && scores.length > 0 && (
         <div ref={captureRef} className="flex flex-col gap-6">
+          {djName && (
+            <div className="text-sm font-medium text-white/60">
+              DJ {djName} ({idParam?.replace(/(\d{4})(\d{4})/, "$1-$2")})
+            </div>
+          )}
+
+          {/* 범례 */}
+          <div className="flex gap-3 flex-wrap text-xs text-white/50">
+            {Object.entries(CLEAR_LABEL).sort((a, b) => Number(b[0]) - Number(a[0])).map(([ct, label]) => (
+              <span key={ct} className="flex items-center gap-1">
+                <span className="inline-block w-2 h-2 rounded-sm" style={{ background: CLEAR_COLOR[Number(ct)] }} />
+                {label}
+              </span>
+            ))}
+          </div>
+
           {/* 클리어 집계 바 */}
           <div className="flex text-xs font-mono rounded overflow-hidden max-w-md">
             {Object.entries(CLEAR_LABEL).sort((a, b) => Number(b[0]) - Number(a[0])).map(([ct, label]) => {
@@ -525,7 +533,7 @@ function ScoresContent() {
 
           {groups.map(([lvKey, items]) => (
             <section key={lvKey} className="flex flex-col gap-2">
-              <h2 className="text-sm font-semibold text-indigo-300 border-b border-white/10 pb-1">
+              <h2 className="sticky top-0 z-10 bg-[#0f0f1a]/90 backdrop-blur text-sm font-semibold text-indigo-300 border-b border-white/10 py-1">
                 ☆{lvKey}
                 <span className="ml-2 text-white/30 font-normal">{items.length}곡</span>
               </h2>

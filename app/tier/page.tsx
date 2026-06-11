@@ -91,7 +91,7 @@ export default function TierPage() {
 
       {groups.map(([lvKey, items]) => (
         <section key={lvKey} className="flex flex-col gap-2">
-          <h2 className="text-sm font-semibold text-indigo-300 border-b border-white/10 pb-1">
+          <h2 className="sticky top-0 z-10 bg-[#0f0f1a]/90 backdrop-blur text-sm font-semibold text-indigo-300 border-b border-white/10 py-1">
             ☆{lvKey}
             <span className="ml-2 text-white/30 font-normal">{items.length}곡</span>
           </h2>
