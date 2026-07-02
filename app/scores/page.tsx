@@ -261,15 +261,34 @@ function ScoresContent() {
   const [hasPassword, setHasPassword] = useState(false);
   const [djName, setDjName] = useState<string | null>(null);
   const captureRef = useRef<HTMLDivElement>(null);
+  const [capturing, setCapturing] = useState(false);
 
-  const handleCapture = () => {
+  const handleCapture = async () => {
     if (!captureRef.current) return;
-    toPng(captureRef.current, { backgroundColor: "#0f0f1a", pixelRatio: 4 }).then((url) => {
+    setCapturing(true);
+    const clone = captureRef.current.cloneNode(true) as HTMLElement;
+    // 캡처본은 7열
+    clone.querySelectorAll(".song-grid").forEach((el) => {
+      el.className = "song-grid grid grid-cols-7 gap-1.5";
+    });
+    const hider = document.createElement("div");
+    hider.style.cssText = "position:fixed;left:-10000px;top:0;";
+    const wrapper = document.createElement("div");
+    wrapper.style.cssText = "width:1200px;padding:16px;box-sizing:border-box;background:#0f0f1a;";
+    wrapper.appendChild(clone);
+    hider.appendChild(wrapper);
+    document.body.appendChild(hider);
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+    try {
+      const url = await toPng(wrapper, { backgroundColor: "#0f0f1a", pixelRatio: 4 });
       const a = document.createElement("a");
       a.href = url;
       a.download = `scoredp_${idParam}_${level}.png`;
       a.click();
-    });
+    } finally {
+      document.body.removeChild(hider);
+      setCapturing(false);
+    }
   };
 
   const fetchScores = useCallback(async (id: string, lv: number | null) => {
@@ -439,7 +458,7 @@ function ScoresContent() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z" />
                 <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0ZM18.75 10.5h.008v.008h-.008V10.5Z" />
               </svg>
-              캡처 (베타)
+              캡처
             </button>
             {hasPassword && (
               <button
@@ -455,6 +474,12 @@ function ScoresContent() {
             )}
           </div>
         </>
+      )}
+
+      {capturing && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+          <div className="w-10 h-10 border-4 border-white/20 border-t-white rounded-full animate-spin" />
+        </div>
       )}
 
       {showPwPrompt && (
@@ -497,7 +522,7 @@ function ScoresContent() {
         <div ref={captureRef} className="flex flex-col gap-6">
           {djName && (
             <div className="text-sm font-medium text-white/60">
-              DJ {djName} ({idParam?.replace(/(\d{4})(\d{4})/, "$1-$2")})
+              DJ {djName} ({idParam?.replace(/(\d{4})(\d{4})/, "$1-$2")}) / ☆{level}
             </div>
           )}
 
@@ -513,22 +538,37 @@ function ScoresContent() {
 
           {/* 클리어 집계 바 */}
           <div className="flex text-xs font-mono rounded overflow-hidden max-w-md">
-            {Object.entries(CLEAR_LABEL).sort((a, b) => Number(b[0]) - Number(a[0])).map(([ct, label]) => {
-              const count = scores.filter(s => s.clear_type === Number(ct)).length;
+            {(() => {
+              const noPlayCount = scores.filter(s => s.clear_type === 0).length;
+              const played = scores.length - noPlayCount;
+              if (played === 0) {
+                return (
+                  <div className="flex items-center justify-center py-0.5 flex-1 bg-white/10 text-white/50">
+                    {noPlayCount}
+                  </div>
+                );
+              }
               return (
-                <div
-                  key={ct}
-                  className="flex items-center justify-center py-0.5 overflow-hidden whitespace-nowrap min-w-[1.5rem]"
-                  style={{ background: CLEAR_COLOR[Number(ct)], color: "#111", flexGrow: count, flexBasis: 0 }}
-                  title={`${label}: ${count}`}
-                >
-                  {count}
-                </div>
+                <>
+                  {Object.entries(CLEAR_LABEL).sort((a, b) => Number(b[0]) - Number(a[0])).map(([ct, label]) => {
+                    const count = scores.filter(s => s.clear_type === Number(ct)).length;
+                    return (
+                      <div
+                        key={ct}
+                        className="flex items-center justify-center py-0.5 overflow-hidden whitespace-nowrap min-w-[1.5rem]"
+                        style={{ background: CLEAR_COLOR[Number(ct)], color: "#111", flexGrow: count, flexBasis: 0 }}
+                        title={`${label}: ${count}`}
+                      >
+                        {count}
+                      </div>
+                    );
+                  })}
+                  <div className="flex items-center justify-center px-2 py-0.5 shrink-0 bg-white/10 text-white/50">
+                    {noPlayCount}
+                  </div>
+                </>
               );
-            })}
-            <div className="flex items-center justify-center px-2 py-0.5 shrink-0 bg-white/10 text-white/50">
-              {scores.length}
-            </div>
+            })()}
           </div>
 
           {groups.map(([lvKey, items]) => (
@@ -537,7 +577,7 @@ function ScoresContent() {
                 ☆{lvKey}
                 <span className="ml-2 text-white/30 font-normal">{items.length}곡</span>
               </h2>
-              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-1.5">
+              <div className="song-grid grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-1.5">
                 {items.map((item, i) => (
                   <SongCard
                     key={item.song_id}
