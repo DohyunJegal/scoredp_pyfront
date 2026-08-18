@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, useRef, Suspense } from "react";
 import { toPng } from "html-to-image";
 import { useSearchParams, useRouter } from "next/navigation";
+import { CHART_STYLE, getTitleColor } from "../songStyle";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -12,6 +13,7 @@ interface ScoreItem {
   level: number;
   chart: string;
   unofficial_level: number | null;
+  version_id: number | null;
   clear_type: number;
   score: number;
   dj_level: string;
@@ -51,12 +53,6 @@ const CLEAR_COLOR: Record<number, string> = {
   1: "#808080",
 };
 
-const CHART_STYLE: Record<string, { color: string; prefix: string }> = {
-  LEGGENDARIA: { color: "#fd067c", prefix: "† " },
-  ANOTHER: { color: "inherit", prefix: "" },
-  HYPER: { color: "#ffa500", prefix: "" },
-};
-
 const LEVELS = [12, 11, 10, 9, 8];
 
 function SongCard({ item, option, editMode, onEdit }: {
@@ -68,6 +64,7 @@ function SongCard({ item, option, editMode, onEdit }: {
   const color = CLEAR_COLOR[item.clear_type] ?? "bg-zinc-800";
   const hasScore = item.score > 0;
   const chartStyle = CHART_STYLE[item.chart] ?? { color: "inherit", prefix: "" };
+  const titleColor = getTitleColor(item.chart, item.version_id);
   const [copied, setCopied] = useState(false);
 
   const handleClick = () => {
@@ -93,7 +90,7 @@ function SongCard({ item, option, editMode, onEdit }: {
         onClick={handleClick}
       >
         <div className="flex flex-col justify-between p-1 sm:p-1.5 flex-1 min-w-0">
-          <span className="text-[10px] sm:text-xs leading-tight line-clamp-2" style={{ color: chartStyle.color }}>
+          <span className="text-[10px] sm:text-xs leading-tight line-clamp-2" style={{ color: titleColor }}>
             {chartStyle.prefix}{item.title}
           </span>
           <div className="flex justify-between items-end">

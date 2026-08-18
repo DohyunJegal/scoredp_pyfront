@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { CHART_STYLE, getTitleColor } from "../songStyle";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -9,15 +10,10 @@ interface SongItem {
   chart: string;
   level: number;
   unofficial_level: number | null;
+  version_id: number | null;
 }
 
 const LEVELS = [12, 11, 10, 9, 8];
-
-const CHART_STYLE: Record<string, { color: string; prefix: string }> = {
-  LEGGENDARIA: { color: "#fd067c", prefix: "† " },
-  ANOTHER: { color: "inherit", prefix: "" },
-  HYPER: { color: "#ffa500", prefix: "" },
-};
 
 function groupByUnofficialLevel(songs: SongItem[]) {
   const map = new Map<string, SongItem[]>();
@@ -104,7 +100,7 @@ export default function TierPage() {
               >
                 <span
                   className="text-[10px] sm:text-xs leading-tight line-clamp-2"
-                  style={{ color: CHART_STYLE[item.chart]?.color ?? "inherit" }}
+                  style={{ color: getTitleColor(item.chart, item.version_id) }}
                 >
                   {CHART_STYLE[item.chart]?.prefix}{item.title}
                 </span>
