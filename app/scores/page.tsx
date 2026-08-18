@@ -72,7 +72,7 @@ function SongCard({ item, option, editMode, onEdit }: {
       onEdit(item);
       return;
     }
-    navigator.clipboard.writeText(item.title.trim()).then(() => {
+    navigator.clipboard.writeText(`${chartStyle.prefix}${item.title}`.trim()).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
     });

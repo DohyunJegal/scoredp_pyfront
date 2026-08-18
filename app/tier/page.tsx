@@ -96,7 +96,7 @@ export default function TierPage() {
               <div
                 key={`${item.title}-${item.chart}-${i}`}
                 className="flex items-center p-1 sm:p-2 border border-white/10 rounded h-10 sm:h-12 min-w-0 active:opacity-70"
-                onClick={() => handleCopy(item.title)}
+                onClick={() => handleCopy(`${CHART_STYLE[item.chart]?.prefix ?? ""}${item.title}`)}
               >
                 <span
                   className="text-[10px] sm:text-xs leading-tight line-clamp-2"
