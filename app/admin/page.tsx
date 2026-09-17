@@ -58,6 +58,22 @@ const CLEAR_LABELS: Record<number, string> = {
 const CHARTS = ["HYPER", "ANOTHER", "LEGGENDARIA"];
 const DAN_LABELS = ["초단", "2단", "3단", "4단", "5단", "6단", "7단", "8단", "9단", "10단", "중전", "개전"];
 const danLabel = (v: number | null) => (v != null ? (DAN_LABELS[v - 1] ?? "-") : "-");
+const RIVALS_PAGE_SIZE = 20;
+
+// 페이지네이션 번호
+function pageWindow(current: number, totalPages: number, span = 2): number[] {
+  if (totalPages <= 0) return [];
+  const size = span * 2 + 1;
+  let start = Math.max(1, current - span);
+  let end = Math.min(totalPages, current + span);
+  if (end - start + 1 < size) {
+    if (start === 1) end = Math.min(totalPages, start + size - 1);
+    else if (end === totalPages) start = Math.max(1, end - size + 1);
+  }
+  const pages: number[] = [];
+  for (let p = start; p <= end; p++) pages.push(p);
+  return pages;
+}
 
 // ── 곡 편집 행 ────────────────────────────────────────────
 function SongRow({ song, adminKey, onSaved }: { song: Song; adminKey: string; onSaved: (s: Song) => void }) {
@@ -202,6 +218,9 @@ export default function AdminPage() {
   // 라이벌 관리
   const [rivalPosts, setRivalPosts] = useState<RivalPostEntry[]>([]);
   const [rivalPostsLoading, setRivalPostsLoading] = useState(false);
+  const [rivalPage, setRivalPage] = useState(1);
+  const [rivalHasMore, setRivalHasMore] = useState(false);
+  const [rivalTotal, setRivalTotal] = useState(0);
   const [rivalPostDeleteConfirm, setRivalPostDeleteConfirm] = useState<number | null>(null);
   const [selectedRivalPostId, setSelectedRivalPostId] = useState<number | null>(null);
   const [rivalComments, setRivalComments] = useState<RivalCommentEntry[]>([]);
@@ -291,12 +310,15 @@ export default function AdminPage() {
     setUsersLoading(false);
   };
 
-  const loadRivalPosts = async () => {
+  const loadRivalPosts = async (targetPage: number = 1) => {
     setRivalPostsLoading(true);
-    const data = await fetch(`${API_URL}/admin/rivals`, {
+    const data = await fetch(`${API_URL}/admin/rivals?page=${targetPage}`, {
       headers: { "X-Admin-Key": adminKey! },
-    }).then((r) => r.json()).catch(() => []);
-    setRivalPosts(data);
+    }).then((r) => r.json()).catch(() => ({ items: [], has_more: false, total: 0 }));
+    setRivalPosts(data.items ?? []);
+    setRivalHasMore(!!data.has_more);
+    setRivalTotal(data.total ?? 0);
+    setRivalPage(targetPage);
     setRivalPostsLoading(false);
   };
 
@@ -793,6 +815,27 @@ export default function AdminPage() {
                   ))}
                 </tbody>
               </table>
+            </div>
+          )}
+
+          {!rivalPostsLoading && rivalPosts.length > 0 && (
+            <div className="flex gap-1.5 justify-center items-center">
+              <button type="button" onClick={() => loadRivalPosts(rivalPage - 1)} disabled={rivalPage <= 1}
+                className="text-xs px-2 py-1 rounded border border-white/20 hover:border-white/40 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+                이전
+              </button>
+              {pageWindow(rivalPage, Math.max(1, Math.ceil(rivalTotal / RIVALS_PAGE_SIZE))).map((p) => (
+                <button key={p} type="button" onClick={() => loadRivalPosts(p)}
+                  className={`w-7 h-7 rounded text-xs transition-colors ${
+                    p === rivalPage ? "bg-indigo-600" : "border border-white/20 hover:border-white/40"
+                  }`}>
+                  {p}
+                </button>
+              ))}
+              <button type="button" onClick={() => loadRivalPosts(rivalPage + 1)} disabled={!rivalHasMore}
+                className="text-xs px-2 py-1 rounded border border-white/20 hover:border-white/40 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+                다음
+              </button>
             </div>
           )}
 

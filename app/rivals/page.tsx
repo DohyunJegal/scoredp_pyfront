@@ -40,10 +40,26 @@ const djNameFilter = (v: string) => asciiOnly(v).toUpperCase();
 const noAngleBrackets = (v: string) => v.replace(/[<>]/g, "");
 const formatId = (id: string) => id.replace(/(\d{4})(\d{4})/, "$1-$2");
 const formatDate = (iso: string) => iso.replace("T", " ").slice(0, 16);
+const PAGE_SIZE = 20;
+
+// 페이지네이션 번호
+function pageWindow(current: number, totalPages: number, span = 2): number[] {
+  if (totalPages <= 0) return [];
+  const size = span * 2 + 1;
+  let start = Math.max(1, current - span);
+  let end = Math.min(totalPages, current + span);
+  if (end - start + 1 < size) {
+    if (start === 1) end = Math.min(totalPages, start + size - 1);
+    else if (end === totalPages) start = Math.max(1, end - size + 1);
+  }
+  const pages: number[] = [];
+  for (let p = start; p <= end; p++) pages.push(p);
+  return pages;
+}
 
 const URL_RE = /(https?:\/\/[^\s<>"]+)/g;
 
-// 본문 속 http(s) URL만 클릭 가능한 링크로 변환 (그 외 스킴은 그대로 텍스트로 둠 — javascript: 등 방지)
+// 본문 속 http(s) URL만 클릭 가능한 링크로 변환
 function Linkify({ text }: { text: string }) {
   const parts = text.split(URL_RE);
   return (
@@ -95,6 +111,7 @@ function WriteModal({ onClose, onCreated }: { onClose: () => void; onCreated: (p
   const [content, setContent] = useState("");
   const [attachScoredp, setAttachScoredp] = useState(false);
   const [attachOhsorry, setAttachOhsorry] = useState(false);
+  const [attachEreter, setAttachEreter] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -105,6 +122,7 @@ function WriteModal({ onClose, onCreated }: { onClose: () => void; onCreated: (p
     const links: string[] = [];
     if (attachScoredp) links.push(`https://scoredp.vercel.app/scores?id=${iidxId}`);
     if (attachOhsorry) links.push(`https://iidx.in/grid/${iidxId}`);
+    if (attachEreter) links.push(`https://ereter.net/iidxplayerdata/${iidxId}`);
     return links.length ? `${content}\n\n${links.join("\n")}` : content;
   };
 
@@ -187,6 +205,11 @@ function WriteModal({ onClose, onCreated }: { onClose: () => void; onCreated: (p
               onChange={(e) => setAttachOhsorry(e.target.checked)} />
             오소리넷
           </label>
+          <label className="flex items-center gap-1.5 cursor-pointer">
+            <input type="checkbox" checked={attachEreter} disabled={!iidxId.trim()}
+              onChange={(e) => setAttachEreter(e.target.checked)} />
+            이레터넷
+          </label>
         </div>
 
         {error && <p className="text-red-400 text-xs">{error}</p>}
@@ -213,26 +236,36 @@ function RivalsList() {
   const [query, setQuery] = useState("");
   const [spDanFilter, setSpDanFilter] = useState<number | null>(null);
   const [dpDanFilter, setDpDanFilter] = useState<number | null>(null);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const [total, setTotal] = useState(0);
 
-  const fetchPosts = useCallback(async () => {
+  const fetchPosts = useCallback(async (targetPage: number) => {
     setLoading(true);
     try {
       const url = new URL(`${API_URL}/rivals`);
       if (query.trim()) url.searchParams.set("q", query.trim());
       if (spDanFilter) url.searchParams.set("sp_dan", String(spDanFilter));
       if (dpDanFilter) url.searchParams.set("dp_dan", String(dpDanFilter));
+      url.searchParams.set("page", String(targetPage));
       const res = await fetch(url.toString());
-      setPosts(await res.json());
+      const data = await res.json();
+      setPosts(data.items ?? []);
+      setHasMore(!!data.has_more);
+      setTotal(data.total ?? 0);
+      setPage(targetPage);
     } catch {
       setPosts([]);
+      setHasMore(false);
+      setTotal(0);
     } finally {
       setLoading(false);
     }
   }, [query, spDanFilter, dpDanFilter]);
 
-  // 검색어나 필터가 바뀔 때마다 자동 검색
+  // 검색어나 필터가 바뀔 때마다 1페이지부터 자동 검색
   useEffect(() => {
-    const t = setTimeout(fetchPosts, 300);
+    const t = setTimeout(() => fetchPosts(1), 300);
     return () => clearTimeout(t);
   }, [fetchPosts]);
 
@@ -290,6 +323,27 @@ function RivalsList() {
               </div>
             </button>
           ))}
+        </div>
+      )}
+
+      {!loading && posts.length > 0 && (
+        <div className="flex gap-1.5 justify-center items-center">
+          <button type="button" onClick={() => fetchPosts(page - 1)} disabled={page <= 1}
+            className="px-3 py-1.5 border border-white/20 hover:border-white/40 disabled:opacity-30 disabled:cursor-not-allowed rounded text-sm transition-colors cursor-pointer">
+            이전
+          </button>
+          {pageWindow(page, Math.max(1, Math.ceil(total / PAGE_SIZE))).map((p) => (
+            <button key={p} type="button" onClick={() => fetchPosts(p)}
+              className={`w-8 h-8 rounded text-sm transition-colors cursor-pointer ${
+                p === page ? "bg-indigo-600" : "border border-white/20 hover:border-white/40"
+              }`}>
+              {p}
+            </button>
+          ))}
+          <button type="button" onClick={() => fetchPosts(page + 1)} disabled={!hasMore}
+            className="px-3 py-1.5 border border-white/20 hover:border-white/40 disabled:opacity-30 disabled:cursor-not-allowed rounded text-sm transition-colors cursor-pointer">
+            다음
+          </button>
         </div>
       )}
 
