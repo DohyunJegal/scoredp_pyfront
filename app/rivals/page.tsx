@@ -12,12 +12,18 @@ function danLabel(v: number | null): string {
   return v != null ? (DAN_LABELS[v - 1] ?? "-") : "-";
 }
 
+// 아레나 클래스
+const ARENA_OPTIONS = ["A1", "A2", "A3", "A4", "A5", "B1", "B2", "B3", "B4", "B5", "C1", "C2", "C3", "C4", "C5"]
+  .map((label) => ({ value: label, label }));
+
 interface RivalPost {
   id: number;
   iidx_id: string;
   dj_name: string;
   sp_dan: number | null;
   dp_dan: number | null;
+  sp_arena: string | null;
+  dp_arena: string | null;
   title: string;
   content: string;
   created_at: string;
@@ -83,18 +89,26 @@ function Linkify({ text }: { text: string }) {
   );
 }
 
-function DanSelect({ label, value, onChange }: { label: string; value: number | null; onChange: (v: number | null) => void }) {
+function RankSelect<T extends string | number>({ label, value, onChange, options }: {
+  label: string;
+  value: T | null;
+  onChange: (v: T | null) => void;
+  options: { value: T; label: string }[];
+}) {
   return (
     <label className="flex items-center gap-1.5 text-xs text-white/60">
       {label}
       <select
         value={value ?? ""}
-        onChange={(e) => onChange(e.target.value ? Number(e.target.value) : null)}
+        onChange={(e) => {
+          const opt = options.find((o) => String(o.value) === e.target.value);
+          onChange(opt ? opt.value : null);
+        }}
         className="px-2 py-1 rounded border border-white/20 bg-zinc-800 text-white text-xs focus:outline-none focus:border-indigo-400"
       >
         <option value="">전체</option>
-        {DAN_OPTIONS.map(({ value, label }) => (
-          <option key={value} value={value}>{label}</option>
+        {options.map((o) => (
+          <option key={o.value} value={o.value}>{o.label}</option>
         ))}
       </select>
     </label>
@@ -108,6 +122,8 @@ function WriteModal({ onClose, onCreated }: { onClose: () => void; onCreated: (p
   const [password, setPassword] = useState("");
   const [spDan, setSpDan] = useState<number | null>(null);
   const [dpDan, setDpDan] = useState<number | null>(null);
+  const [spArena, setSpArena] = useState<string | null>(null);
+  const [dpArena, setDpArena] = useState<string | null>(null);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [attachScoredp, setAttachScoredp] = useState(false);
@@ -136,7 +152,8 @@ function WriteModal({ onClose, onCreated }: { onClose: () => void; onCreated: (p
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           iidx_id: iidxId, dj_name: djName, password,
-          sp_dan: spDan, dp_dan: dpDan, title, content: buildContent(),
+          sp_dan: spDan, dp_dan: dpDan, sp_arena: spArena, dp_arena: dpArena,
+          title, content: buildContent(),
         }),
       });
       if (!res.ok) {
@@ -189,9 +206,15 @@ function WriteModal({ onClose, onCreated }: { onClose: () => void; onCreated: (p
           className="px-3 py-1.5 rounded border border-white/20 bg-white/5 text-sm resize-none focus:outline-none focus:border-indigo-400"
         />
 
-        <div className="flex gap-3">
-          <DanSelect label="SP" value={spDan} onChange={setSpDan} />
-          <DanSelect label="DP" value={dpDan} onChange={setDpDan} />
+        <div className="flex flex-wrap items-center gap-3">
+          <span className="text-xs text-white/60">단위</span>
+          <RankSelect label="SP" options={DAN_OPTIONS} value={spDan} onChange={setSpDan} />
+          <RankSelect label="DP" options={DAN_OPTIONS} value={dpDan} onChange={setDpDan} />
+        </div>
+        <div className="flex flex-wrap items-center gap-3">
+          <span className="text-xs text-white/60">아레나</span>
+          <RankSelect label="SP" options={ARENA_OPTIONS} value={spArena} onChange={setSpArena} />
+          <RankSelect label="DP" options={ARENA_OPTIONS} value={dpArena} onChange={setDpArena} />
         </div>
 
         <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-4 text-xs text-white/60">
@@ -239,6 +262,8 @@ function RivalsList() {
   const [query, setQuery] = useState("");
   const [spDanFilter, setSpDanFilter] = useState<number | null>(null);
   const [dpDanFilter, setDpDanFilter] = useState<number | null>(null);
+  const [spArenaFilter, setSpArenaFilter] = useState<string | null>(null);
+  const [dpArenaFilter, setDpArenaFilter] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
   const [total, setTotal] = useState(0);
@@ -250,6 +275,8 @@ function RivalsList() {
       if (query.trim()) url.searchParams.set("q", query.trim());
       if (spDanFilter) url.searchParams.set("sp_dan", String(spDanFilter));
       if (dpDanFilter) url.searchParams.set("dp_dan", String(dpDanFilter));
+      if (spArenaFilter) url.searchParams.set("sp_arena", spArenaFilter);
+      if (dpArenaFilter) url.searchParams.set("dp_arena", dpArenaFilter);
       url.searchParams.set("page", String(targetPage));
       const res = await fetch(url.toString());
       const data = await res.json();
@@ -264,7 +291,7 @@ function RivalsList() {
     } finally {
       setLoading(false);
     }
-  }, [query, spDanFilter, dpDanFilter]);
+  }, [query, spDanFilter, dpDanFilter, spArenaFilter, dpArenaFilter]);
 
   // 검색어나 필터가 바뀔 때마다 1페이지부터 자동 검색
   useEffect(() => {
@@ -276,30 +303,40 @@ function RivalsList() {
     setQuery("");
     setSpDanFilter(null);
     setDpDanFilter(null);
+    setSpArenaFilter(null);
+    setDpArenaFilter(null);
   };
 
   return (
     <div className="flex flex-col gap-6">
       <h1 className="text-2xl font-bold">라이벌 찾기</h1>
 
-      <div className="flex gap-2 flex-wrap items-center">
-        <input
-          type="text" placeholder="닉네임 또는 IIDX ID" value={query} maxLength={8}
-          onChange={(e) => setQuery(djNameFilter(e.target.value))}
-          className="w-28 sm:w-56 px-3 py-1.5 rounded border border-white/20 bg-white/5 text-sm focus:outline-none focus:border-indigo-400"
-        />
-        <DanSelect label="SP" value={spDanFilter} onChange={setSpDanFilter} />
-        <DanSelect label="DP" value={dpDanFilter} onChange={setDpDanFilter} />
-        {/* 모바일에서만 줄바꿈 강제 */}
-        <div className="basis-full sm:hidden" />
-        <button type="button" onClick={handleReset}
-          className="px-3 py-1.5 border border-white/20 hover:border-white/40 rounded text-sm transition-colors cursor-pointer">
-          초기화
-        </button>
-        <button type="button" onClick={() => setShowWrite(true)}
-          className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 rounded text-sm transition-colors cursor-pointer">
-          글쓰기
-        </button>
+      <div className="flex flex-col gap-2">
+        <div className="flex gap-2 items-center">
+          <input
+            type="text" placeholder="닉네임 또는 IIDX ID" value={query} maxLength={8}
+            onChange={(e) => setQuery(djNameFilter(e.target.value))}
+            className="w-28 sm:w-56 px-3 py-1.5 rounded border border-white/20 bg-white/5 text-sm focus:outline-none focus:border-indigo-400"
+          />
+          <button type="button" onClick={handleReset}
+            className="px-3 py-1.5 border border-white/20 hover:border-white/40 rounded text-sm transition-colors cursor-pointer">
+            초기화
+          </button>
+          <button type="button" onClick={() => setShowWrite(true)}
+            className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 rounded text-sm transition-colors cursor-pointer">
+            글쓰기
+          </button>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs text-white/60">단위</span>
+          <RankSelect label="SP" options={DAN_OPTIONS} value={spDanFilter} onChange={setSpDanFilter} />
+          <RankSelect label="DP" options={DAN_OPTIONS} value={dpDanFilter} onChange={setDpDanFilter} />
+          {/* 모바일에서만 단/아레나 사이 줄바꿈 강제 */}
+          <div className="basis-full sm:hidden" />
+          <span className="text-xs text-white/60">아레나</span>
+          <RankSelect label="SP" options={ARENA_OPTIONS} value={spArenaFilter} onChange={setSpArenaFilter} />
+          <RankSelect label="DP" options={ARENA_OPTIONS} value={dpArenaFilter} onChange={setDpArenaFilter} />
+        </div>
       </div>
 
       {loading ? (
@@ -314,15 +351,18 @@ function RivalsList() {
               onClick={() => router.push(`/rivals?post=${p.id}`)}
               className="flex flex-col gap-1 p-3 rounded-lg border border-white/10 hover:border-indigo-400 hover:bg-indigo-400/5 transition-all text-left cursor-pointer"
             >
-              <div className="flex justify-between items-start gap-2">
-                <span className="text-sm font-semibold line-clamp-1">{p.title}</span>
-                <span className="text-xs text-white/30 shrink-0">{formatDate(p.created_at)}</span>
+              <div className="flex items-baseline gap-1 min-w-0">
+                <span className="text-sm font-semibold truncate">{p.title}</span>
+                {p.comment_count > 0 && <span className="text-sm text-indigo-300/70 shrink-0">{p.comment_count}</span>}
               </div>
               <div className="flex items-center gap-2 text-xs text-white/40 flex-wrap">
                 <span>{p.dj_name} ({formatId(p.iidx_id)})</span>
-                {p.sp_dan != null && <span className="text-indigo-300/70">SP {danLabel(p.sp_dan)}</span>}
-                {p.dp_dan != null && <span className="text-indigo-300/70">DP {danLabel(p.dp_dan)}</span>}
-                <span className="ml-auto">댓글 {p.comment_count}</span>
+                {(p.sp_dan != null || p.sp_arena != null) && (
+                  <span className="text-indigo-300/70">SP {p.sp_dan != null && danLabel(p.sp_dan)} {p.sp_arena}</span>
+                )}
+                {(p.dp_dan != null || p.dp_arena != null) && (
+                  <span className="text-indigo-300/70">DP {p.dp_dan != null && danLabel(p.dp_dan)} {p.dp_arena}</span>
+                )}
               </div>
             </button>
           ))}
@@ -568,6 +608,8 @@ function RivalDetail({ postId }: { postId: number }) {
   const [verifiedPassword, setVerifiedPassword] = useState("");
   const [spDan, setSpDan] = useState<number | null>(null);
   const [dpDan, setDpDan] = useState<number | null>(null);
+  const [spArena, setSpArena] = useState<string | null>(null);
+  const [dpArena, setDpArena] = useState<string | null>(null);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [busy, setBusy] = useState(false);
@@ -585,6 +627,7 @@ function RivalDetail({ postId }: { postId: number }) {
       const p: RivalPost = await postRes.json();
       setPost(p);
       setSpDan(p.sp_dan); setDpDan(p.dp_dan);
+      setSpArena(p.sp_arena); setDpArena(p.dp_arena);
       setTitle(p.title); setContent(p.content);
       setComments(await commentsRes.json());
     } finally {
@@ -597,7 +640,11 @@ function RivalDetail({ postId }: { postId: number }) {
   const startVerify = () => { setVerifyMode(true); setEditMode(false); setDeleteMode(false); setPassword(""); setError(null); };
   const cancelEdit = () => {
     setVerifyMode(false); setEditMode(false); setPassword(""); setVerifiedPassword(""); setError(null);
-    if (post) { setSpDan(post.sp_dan); setDpDan(post.dp_dan); setTitle(post.title); setContent(post.content); }
+    if (post) {
+      setSpDan(post.sp_dan); setDpDan(post.dp_dan);
+      setSpArena(post.sp_arena); setDpArena(post.dp_arena);
+      setTitle(post.title); setContent(post.content);
+    }
   };
 
   const handleVerify = async () => {
@@ -629,7 +676,10 @@ function RivalDetail({ postId }: { postId: number }) {
       const res = await fetch(`${API_URL}/rivals/${postId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password: verifiedPassword, sp_dan: spDan, dp_dan: dpDan, title, content }),
+        body: JSON.stringify({
+          password: verifiedPassword, sp_dan: spDan, dp_dan: dpDan,
+          sp_arena: spArena, dp_arena: dpArena, title, content,
+        }),
       });
       if (res.status === 401) { setError("비밀번호가 올바르지 않습니다."); return; }
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -666,17 +716,21 @@ function RivalDetail({ postId }: { postId: number }) {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-bold">라이벌 찾기</h1>
+      <h1 className="text-2xl font-bold cursor-pointer hover:text-white/80" onClick={() => router.push("/rivals")}>라이벌 찾기</h1>
 
       <div className="flex flex-col gap-3">
         {!editMode ? (
           <>
             <h2 className="text-lg font-bold break-words">{post.title}</h2>
-            <div className="flex items-center justify-between gap-2 text-xs text-white/40">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-2 text-xs text-white/40">
               <div className="flex items-center gap-2 flex-wrap min-w-0">
                 <span>{post.dj_name} ({formatId(post.iidx_id)})</span>
-                {post.sp_dan != null && <span className="text-indigo-300/70">SP {danLabel(post.sp_dan)}</span>}
-                {post.dp_dan != null && <span className="text-indigo-300/70">DP {danLabel(post.dp_dan)}</span>}
+                {(post.sp_dan != null || post.sp_arena != null) && (
+                  <span className="text-indigo-300/70">SP {post.sp_dan != null && danLabel(post.sp_dan)} {post.sp_arena}</span>
+                )}
+                {(post.dp_dan != null || post.dp_arena != null) && (
+                  <span className="text-indigo-300/70">DP {post.dp_dan != null && danLabel(post.dp_dan)} {post.dp_arena}</span>
+                )}
               </div>
               <span className="text-white/30 shrink-0">{formatDate(post.created_at)}</span>
             </div>
@@ -712,9 +766,14 @@ function RivalDetail({ postId }: { postId: number }) {
         ) : (
           <>
             <span className="text-xs text-white/40">{post.dj_name} ({formatId(post.iidx_id)})</span>
-            <div className="flex gap-3">
-              <DanSelect label="SP" value={spDan} onChange={setSpDan} />
-              <DanSelect label="DP" value={dpDan} onChange={setDpDan} />
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="text-xs text-white/60">단위</span>
+              <RankSelect label="SP" options={DAN_OPTIONS} value={spDan} onChange={setSpDan} />
+              <RankSelect label="DP" options={DAN_OPTIONS} value={dpDan} onChange={setDpDan} />
+              <div className="basis-full sm:hidden" />
+              <span className="text-xs text-white/60">아레나</span>
+              <RankSelect label="SP" options={ARENA_OPTIONS} value={spArena} onChange={setSpArena} />
+              <RankSelect label="DP" options={ARENA_OPTIONS} value={dpArena} onChange={setDpArena} />
             </div>
             <input type="text" placeholder="제목" value={title} maxLength={60}
               onChange={(e) => setTitle(noAngleBrackets(e.target.value))}

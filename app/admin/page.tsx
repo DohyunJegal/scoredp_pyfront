@@ -37,6 +37,8 @@ interface RivalPostEntry {
   dj_name: string;
   sp_dan: number | null;
   dp_dan: number | null;
+  sp_arena: string | null;
+  dp_arena: string | null;
   title: string;
   content: string;
   created_at: string;
@@ -766,6 +768,8 @@ export default function AdminPage() {
                     <th className="px-3 py-2 text-left font-normal w-32">작성자</th>
                     <th className="px-3 py-2 text-center font-normal w-16">SP</th>
                     <th className="px-3 py-2 text-center font-normal w-16">DP</th>
+                    <th className="px-3 py-2 text-center font-normal w-20">SP아레나</th>
+                    <th className="px-3 py-2 text-center font-normal w-20">DP아레나</th>
                     <th className="px-3 py-2 text-center font-normal w-14">댓글</th>
                     <th className="px-3 py-2 text-center font-normal w-32">작성일</th>
                     <th className="px-3 py-2 w-40" />
@@ -778,6 +782,8 @@ export default function AdminPage() {
                       <td className="px-3 py-1.5 text-xs text-white/60">{p.dj_name} ({p.iidx_id})</td>
                       <td className="px-3 py-1.5 text-xs text-center text-indigo-300">{danLabel(p.sp_dan)}</td>
                       <td className="px-3 py-1.5 text-xs text-center text-indigo-300">{danLabel(p.dp_dan)}</td>
+                      <td className="px-3 py-1.5 text-xs text-center text-indigo-300">{p.sp_arena ?? "-"}</td>
+                      <td className="px-3 py-1.5 text-xs text-center text-indigo-300">{p.dp_arena ?? "-"}</td>
                       <td className="px-3 py-1.5 text-xs text-center text-white/50">{p.comment_count}</td>
                       <td className="px-3 py-1.5 text-xs text-center text-white/40">{formatDate(p.created_at)}</td>
                       <td className="px-3 py-1.5 w-40">
