@@ -41,6 +41,31 @@ const noAngleBrackets = (v: string) => v.replace(/[<>]/g, "");
 const formatId = (id: string) => id.replace(/(\d{4})(\d{4})/, "$1-$2");
 const formatDate = (iso: string) => iso.replace("T", " ").slice(0, 16);
 
+const URL_RE = /(https?:\/\/[^\s<>"]+)/g;
+
+// 본문 속 http(s) URL만 클릭 가능한 링크로 변환 (그 외 스킴은 그대로 텍스트로 둠 — javascript: 등 방지)
+function Linkify({ text }: { text: string }) {
+  const parts = text.split(URL_RE);
+  return (
+    <>
+      {parts.map((part, i) => {
+        if (i % 2 === 0) return part;
+        const trailMatch = part.match(/[.,!?)\]}'"”’]+$/);
+        const trailing = trailMatch ? trailMatch[0] : "";
+        const url = trailing ? part.slice(0, -trailing.length) : part;
+        return (
+          <span key={i}>
+            <a href={url} target="_blank" rel="noopener noreferrer" className="text-indigo-400 underline hover:text-indigo-300 break-all">
+              {url}
+            </a>
+            {trailing}
+          </span>
+        );
+      })}
+    </>
+  );
+}
+
 function DanSelect({ label, value, onChange }: { label: string; value: number | null; onChange: (v: number | null) => void }) {
   return (
     <label className="flex items-center gap-1.5 text-xs text-white/60">
@@ -68,10 +93,20 @@ function WriteModal({ onClose, onCreated }: { onClose: () => void; onCreated: (p
   const [dpDan, setDpDan] = useState<number | null>(null);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
+  const [attachScoredp, setAttachScoredp] = useState(false);
+  const [attachOhsorry, setAttachOhsorry] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const canSubmit = iidxId.trim() && djName.trim() && password.trim() && title.trim() && content.trim();
+
+  const buildContent = () => {
+    if (!iidxId.trim()) return content;
+    const links: string[] = [];
+    if (attachScoredp) links.push(`https://scoredp.vercel.app/scores?id=${iidxId}`);
+    if (attachOhsorry) links.push(`https://iidx.in/grid/${iidxId}`);
+    return links.length ? `${content}\n\n${links.join("\n")}` : content;
+  };
 
   const handleSubmit = async () => {
     setSaving(true);
@@ -82,7 +117,7 @@ function WriteModal({ onClose, onCreated }: { onClose: () => void; onCreated: (p
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           iidx_id: iidxId, dj_name: djName, password,
-          sp_dan: spDan, dp_dan: dpDan, title, content,
+          sp_dan: spDan, dp_dan: dpDan, title, content: buildContent(),
         }),
       });
       if (!res.ok) {
@@ -98,8 +133,8 @@ function WriteModal({ onClose, onCreated }: { onClose: () => void; onCreated: (p
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={onClose}>
-      <div className="bg-zinc-900 border border-white/10 rounded-xl p-5 w-full max-w-md flex flex-col gap-3 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+      <div className="bg-zinc-900 border border-white/10 rounded-xl p-5 w-full max-w-md flex flex-col gap-3 max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center">
           <span className="text-sm font-semibold">라이벌 찾기</span>
           <button onClick={onClose} className="text-white/40 hover:text-white/70 cursor-pointer">✕</button>
@@ -138,6 +173,20 @@ function WriteModal({ onClose, onCreated }: { onClose: () => void; onCreated: (p
         <div className="flex gap-3">
           <DanSelect label="SP" value={spDan} onChange={setSpDan} />
           <DanSelect label="DP" value={dpDan} onChange={setDpDan} />
+        </div>
+
+        <div className="flex gap-4 text-xs text-white/60">
+          링크 첨부
+          <label className="flex items-center gap-1.5 cursor-pointer">
+            <input type="checkbox" checked={attachScoredp} disabled={!iidxId.trim()}
+              onChange={(e) => setAttachScoredp(e.target.checked)} />
+            scoredp
+          </label>
+          <label className="flex items-center gap-1.5 cursor-pointer">
+            <input type="checkbox" checked={attachOhsorry} disabled={!iidxId.trim()}
+              onChange={(e) => setAttachOhsorry(e.target.checked)} />
+            오소리넷
+          </label>
         </div>
 
         {error && <p className="text-red-400 text-xs">{error}</p>}
@@ -342,7 +391,7 @@ function CommentRow({ comment, onDeleted }: { comment: RivalComment; onDeleted: 
 
       {!editMode ? (
         <>
-          <p className="text-sm whitespace-pre-wrap break-words">{liveContent}</p>
+          <p className="text-sm whitespace-pre-wrap break-words"><Linkify text={liveContent} /></p>
           <div className="flex gap-2 justify-end">
             <button onClick={startVerify} className="text-xs text-white/30 hover:text-white/60 cursor-pointer">수정</button>
             <button onClick={startDelete} className="text-xs text-white/30 hover:text-red-400 cursor-pointer">삭제</button>
@@ -574,7 +623,7 @@ function RivalDetail({ postId }: { postId: number }) {
               </div>
               <span className="text-white/30 shrink-0">{formatDate(post.created_at)}</span>
             </div>
-            <p className="text-sm whitespace-pre-wrap break-words">{post.content}</p>
+            <p className="text-sm whitespace-pre-wrap break-words"><Linkify text={post.content} /></p>
             <div className="flex gap-3 justify-end">
               <button onClick={startVerify} className="text-xs text-white/40 hover:text-white/70 cursor-pointer">수정</button>
               <button onClick={() => { setDeleteMode(true); setVerifyMode(false); setPassword(""); setError(null); }}

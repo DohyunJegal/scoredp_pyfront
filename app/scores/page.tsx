@@ -152,8 +152,8 @@ function OptionModal({ item, existing, iidxId, password, onSave, onClose }: {
   const chartStyle = CHART_STYLE[item.chart] ?? { color: "inherit", prefix: "" };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={onClose}>
-      <div className="bg-zinc-900 border border-white/10 rounded-xl p-5 w-80 flex flex-col gap-4" onClick={e => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+      <div className="bg-zinc-900 border border-white/10 rounded-xl p-5 w-80 flex flex-col gap-4">
         <div className="flex justify-between items-start">
           <div className="flex flex-col gap-0.5">
             <span className="text-xs font-semibold leading-snug line-clamp-2" style={{ color: chartStyle.color }}>
@@ -525,8 +525,8 @@ function ScoresContent() {
       )}
 
       {showPwPrompt && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={() => setShowPwPrompt(false)}>
-          <div className="bg-zinc-900 border border-white/10 rounded-xl p-5 w-72 flex flex-col gap-4" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+          <div className="bg-zinc-900 border border-white/10 rounded-xl p-5 w-72 flex flex-col gap-4">
             <div className="flex justify-between items-center">
               <span className="text-sm font-semibold">배치 저장 비밀번호</span>
               <button onClick={() => setShowPwPrompt(false)} className="text-white/40 hover:text-white/70 cursor-pointer">✕</button>
