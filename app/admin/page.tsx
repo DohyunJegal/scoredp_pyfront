@@ -59,6 +59,8 @@ const CHARTS = ["HYPER", "ANOTHER", "LEGGENDARIA"];
 const DAN_LABELS = ["초단", "2단", "3단", "4단", "5단", "6단", "7단", "8단", "9단", "10단", "중전", "개전"];
 const danLabel = (v: number | null) => (v != null ? (DAN_LABELS[v - 1] ?? "-") : "-");
 const RIVALS_PAGE_SIZE = 20;
+// 서버에 저장된 UTC를 KST로 변환
+const formatDate = (iso: string) => new Date(iso).toLocaleString("sv-SE", { timeZone: "Asia/Seoul" }).slice(0, 16);
 
 // 페이지네이션 번호
 function pageWindow(current: number, totalPages: number, span = 2): number[] {
@@ -777,7 +779,7 @@ export default function AdminPage() {
                       <td className="px-3 py-1.5 text-xs text-center text-indigo-300">{danLabel(p.sp_dan)}</td>
                       <td className="px-3 py-1.5 text-xs text-center text-indigo-300">{danLabel(p.dp_dan)}</td>
                       <td className="px-3 py-1.5 text-xs text-center text-white/50">{p.comment_count}</td>
-                      <td className="px-3 py-1.5 text-xs text-center text-white/40">{p.created_at.slice(0, 16).replace("T", " ")}</td>
+                      <td className="px-3 py-1.5 text-xs text-center text-white/40">{formatDate(p.created_at)}</td>
                       <td className="px-3 py-1.5 w-40">
                         <div className="flex gap-1 whitespace-nowrap">
                           <button
@@ -861,7 +863,7 @@ export default function AdminPage() {
                       <tr key={c.id} className="border-b border-white/5 hover:bg-white/5">
                         <td className="px-3 py-1.5 text-xs text-white/60">{c.dj_name} ({c.iidx_id})</td>
                         <td className="px-3 py-1.5">{c.content}</td>
-                        <td className="px-3 py-1.5 text-xs text-center text-white/40">{c.created_at.slice(0, 16).replace("T", " ")}</td>
+                        <td className="px-3 py-1.5 text-xs text-center text-white/40">{formatDate(c.created_at)}</td>
                         <td className="px-3 py-1.5 w-32">
                           {rivalCommentDeleteConfirm === c.id ? (
                             <div className="flex gap-1 whitespace-nowrap">

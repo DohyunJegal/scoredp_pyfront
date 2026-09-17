@@ -39,7 +39,8 @@ const digitsOnly = (v: string) => v.replace(/\D/g, "");
 const djNameFilter = (v: string) => asciiOnly(v).toUpperCase();
 const noAngleBrackets = (v: string) => v.replace(/[<>]/g, "");
 const formatId = (id: string) => id.replace(/(\d{4})(\d{4})/, "$1-$2");
-const formatDate = (iso: string) => iso.replace("T", " ").slice(0, 16);
+// 서버에 저장된 UTC를 KST로 변환
+const formatDate = (iso: string) => new Date(iso).toLocaleString("sv-SE", { timeZone: "Asia/Seoul" }).slice(0, 16);
 const PAGE_SIZE = 20;
 
 // 페이지네이션 번호
