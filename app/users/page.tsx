@@ -24,8 +24,7 @@ export default function UsersPage() {
   }, []);
 
   const filtered = users.filter((u) => {
-    const q = query.toLowerCase();
-    return u.dj_name.toLowerCase().includes(q) || u.iidx_id.includes(q);
+    return u.dj_name.toLowerCase().includes(query.toLowerCase()) || u.iidx_id.includes(query.replace(/-/g, ""));
   });
 
   return (
@@ -35,8 +34,9 @@ export default function UsersPage() {
       <input
         type="text"
         value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        placeholder="닉네임 또는 IIDX ID 검색"
+        onChange={(e) => setQuery(e.target.value.replace(/[^\x21-\x7E]/g, "").slice(0, 8))}
+        placeholder="닉네임 또는 IIDX ID"
+        maxLength={8}
         className="px-3 py-1.5 rounded border border-white/20 bg-white/5 text-sm w-64 focus:outline-none focus:border-indigo-400"
       />
 

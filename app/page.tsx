@@ -96,8 +96,8 @@ export default function HomePage() {
         <a href="https://ereter.net/" target="_blank" className="text-indigo-400">
           ereter.net
         </a>
-        <a href="https://ohsorry.vercel.app/" target="_blank" className="text-indigo-400">
-          오소리넷 - DP 리커멘드 점수 계산기 / 추천곡 자판기 by grom
+        <a href="https://iidx.in/" target="_blank" className="text-indigo-400">
+          오소리넷 - DP 리커멘드 계산 & 곡 추천 서비스 by grom
         </a>
         <a href="https://dpoptionz.vercel.app/" target="_blank" className="text-indigo-400">
           Double Play Optionz - DP 배치 추천 사이트 by 𝔸𝕁(DXR*00)

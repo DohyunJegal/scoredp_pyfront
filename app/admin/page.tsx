@@ -31,11 +31,33 @@ interface ScoreEntry {
   updated_at: string | null;
 }
 
+interface RivalPostEntry {
+  id: number;
+  iidx_id: string;
+  dj_name: string;
+  sp_dan: number | null;
+  dp_dan: number | null;
+  title: string;
+  content: string;
+  created_at: string;
+  comment_count: number;
+}
+
+interface RivalCommentEntry {
+  id: number;
+  iidx_id: string;
+  dj_name: string;
+  content: string;
+  created_at: string;
+}
+
 const CLEAR_LABELS: Record<number, string> = {
   1: "FAILED", 2: "ASSIST", 3: "EASY", 4: "CLEAR", 5: "HARD", 6: "EX-HARD", 7: "FC",
 };
 
 const CHARTS = ["HYPER", "ANOTHER", "LEGGENDARIA"];
+const DAN_LABELS = ["초단", "2단", "3단", "4단", "5단", "6단", "7단", "8단", "9단", "10단", "중전", "개전"];
+const danLabel = (v: number | null) => (v != null ? (DAN_LABELS[v - 1] ?? "-") : "-");
 
 // ── 곡 편집 행 ────────────────────────────────────────────
 function SongRow({ song, adminKey, onSaved }: { song: Song; adminKey: string; onSaved: (s: Song) => void }) {
@@ -154,7 +176,7 @@ export default function AdminPage() {
   const [authError, setAuthError] = useState(false);
   const [authChecking, setAuthChecking] = useState(false);
 
-  const [tab, setTab] = useState<"songs" | "users" | "scores">("songs");
+  const [tab, setTab] = useState<"songs" | "users" | "scores" | "rivals">("songs");
 
   // 곡 관리
   const [songs, setSongs] = useState<Song[]>([]);
@@ -177,6 +199,15 @@ export default function AdminPage() {
   const [scoresLoading, setScoresLoading] = useState(false);
   const [scoreDeleteConfirm, setScoreDeleteConfirm] = useState<number | null>(null);
 
+  // 라이벌 관리
+  const [rivalPosts, setRivalPosts] = useState<RivalPostEntry[]>([]);
+  const [rivalPostsLoading, setRivalPostsLoading] = useState(false);
+  const [rivalPostDeleteConfirm, setRivalPostDeleteConfirm] = useState<number | null>(null);
+  const [selectedRivalPostId, setSelectedRivalPostId] = useState<number | null>(null);
+  const [rivalComments, setRivalComments] = useState<RivalCommentEntry[]>([]);
+  const [rivalCommentsLoading, setRivalCommentsLoading] = useState(false);
+  const [rivalCommentDeleteConfirm, setRivalCommentDeleteConfirm] = useState<number | null>(null);
+
   // sessionStorage에서 키 복원
   useEffect(() => {
     const saved = sessionStorage.getItem("adminKey");
@@ -187,6 +218,7 @@ export default function AdminPage() {
     if (!adminKey) return;
     if (tab === "songs" && songs.length === 0) loadSongs();
     if ((tab === "users" || tab === "scores") && users.length === 0) loadUsers();
+    if (tab === "rivals" && rivalPosts.length === 0) loadRivalPosts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab, adminKey]);
 
@@ -204,6 +236,21 @@ export default function AdminPage() {
       .finally(() => setScoresLoading(false));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedUserId]);
+
+  // 라이벌 글 선택 시 댓글 로드
+  useEffect(() => {
+    if (selectedRivalPostId === null) { setRivalComments([]); return; }
+    setRivalCommentsLoading(true);
+    setRivalCommentDeleteConfirm(null);
+    fetch(`${API_URL}/admin/rivals/${selectedRivalPostId}/comments`, {
+      headers: { "X-Admin-Key": adminKey! },
+    })
+      .then((r) => r.json())
+      .then((data) => setRivalComments(data))
+      .catch(() => setRivalComments([]))
+      .finally(() => setRivalCommentsLoading(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedRivalPostId]);
 
   const handleLogin = async () => {
     setAuthChecking(true);
@@ -242,6 +289,15 @@ export default function AdminPage() {
     }).then((r) => r.json()).catch(() => []);
     setUsers(data);
     setUsersLoading(false);
+  };
+
+  const loadRivalPosts = async () => {
+    setRivalPostsLoading(true);
+    const data = await fetch(`${API_URL}/admin/rivals`, {
+      headers: { "X-Admin-Key": adminKey! },
+    }).then((r) => r.json()).catch(() => []);
+    setRivalPosts(data);
+    setRivalPostsLoading(false);
   };
 
   const handleExport = async () => {
@@ -326,6 +382,40 @@ export default function AdminPage() {
     setScoreDeleteConfirm(null);
   };
 
+  const handleDeleteRivalPost = async (postId: number) => {
+    if (!confirm("이 글을 삭제하겠습니까? 댓글도 함께 삭제되며 취소할 수 없습니다.")) {
+      setRivalPostDeleteConfirm(null);
+      return;
+    }
+    const res = await fetch(`${API_URL}/admin/rivals/${postId}`, {
+      method: "DELETE",
+      headers: { "X-Admin-Key": adminKey! },
+    });
+    if (res.ok) {
+      setRivalPosts((prev) => prev.filter((p) => p.id !== postId));
+      if (selectedRivalPostId === postId) setSelectedRivalPostId(null);
+    }
+    setRivalPostDeleteConfirm(null);
+  };
+
+  const handleDeleteRivalComment = async (commentId: number) => {
+    if (!confirm("이 댓글을 삭제하겠습니까? 이 작업은 취소할 수 없습니다.")) {
+      setRivalCommentDeleteConfirm(null);
+      return;
+    }
+    const res = await fetch(`${API_URL}/admin/rivals/comments/${commentId}`, {
+      method: "DELETE",
+      headers: { "X-Admin-Key": adminKey! },
+    });
+    if (res.ok) {
+      setRivalComments((prev) => prev.filter((c) => c.id !== commentId));
+      setRivalPosts((prev) =>
+        prev.map((p) => p.id === selectedRivalPostId ? { ...p, comment_count: p.comment_count - 1 } : p)
+      );
+    }
+    setRivalCommentDeleteConfirm(null);
+  };
+
   const toggleSort = (key: typeof sortKey) => {
     if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
     else { setSortKey(key); setSortDir("asc"); }
@@ -348,10 +438,11 @@ export default function AdminPage() {
       return sortDir === "asc" ? cmp : -cmp;
     });
 
-  const TAB_LABELS: Record<"songs" | "users" | "scores", string> = {
+  const TAB_LABELS: Record<"songs" | "users" | "scores" | "rivals", string> = {
     songs: "곡 관리",
     users: "유저 관리",
     scores: "기록 관리",
+    rivals: "라이벌 관리",
   };
 
   // ── 비밀번호 화면 ──────────────────────────────────────
@@ -395,7 +486,7 @@ export default function AdminPage() {
 
       {/* 탭 */}
       <div className="flex gap-1 border-b border-white/10">
-        {(["songs", "users", "scores"] as const).map((t) => (
+        {(["songs", "users", "scores", "rivals"] as const).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
@@ -630,6 +721,134 @@ export default function AdminPage() {
                   ))}
                 </tbody>
               </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── 라이벌 관리 ── */}
+      {tab === "rivals" && (
+        <div className="flex flex-col gap-6">
+          {rivalPostsLoading ? (
+            <p className="text-white/40 text-sm">불러오는 중…</p>
+          ) : rivalPosts.length === 0 ? (
+            <p className="text-white/30 text-sm">글이 없습니다.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-white/10 text-white/40 text-xs">
+                    <th className="px-3 py-2 text-left font-normal">제목</th>
+                    <th className="px-3 py-2 text-left font-normal w-32">작성자</th>
+                    <th className="px-3 py-2 text-center font-normal w-16">SP</th>
+                    <th className="px-3 py-2 text-center font-normal w-16">DP</th>
+                    <th className="px-3 py-2 text-center font-normal w-14">댓글</th>
+                    <th className="px-3 py-2 text-center font-normal w-32">작성일</th>
+                    <th className="px-3 py-2 w-40" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {rivalPosts.map((p) => (
+                    <tr key={p.id} className={`border-b border-white/5 hover:bg-white/5 ${selectedRivalPostId === p.id ? "bg-indigo-950/30" : ""}`}>
+                      <td className="px-3 py-1.5">{p.title}</td>
+                      <td className="px-3 py-1.5 text-xs text-white/60">{p.dj_name} ({p.iidx_id})</td>
+                      <td className="px-3 py-1.5 text-xs text-center text-indigo-300">{danLabel(p.sp_dan)}</td>
+                      <td className="px-3 py-1.5 text-xs text-center text-indigo-300">{danLabel(p.dp_dan)}</td>
+                      <td className="px-3 py-1.5 text-xs text-center text-white/50">{p.comment_count}</td>
+                      <td className="px-3 py-1.5 text-xs text-center text-white/40">{p.created_at.slice(0, 16).replace("T", " ")}</td>
+                      <td className="px-3 py-1.5 w-40">
+                        <div className="flex gap-1 whitespace-nowrap">
+                          <button
+                            onClick={() => setSelectedRivalPostId(selectedRivalPostId === p.id ? null : p.id)}
+                            className="text-xs px-2 py-0.5 rounded border border-white/20 hover:border-indigo-400 hover:text-indigo-400 transition-colors"
+                          >
+                            {selectedRivalPostId === p.id ? "닫기" : "댓글 보기"}
+                          </button>
+                          {rivalPostDeleteConfirm === p.id ? (
+                            <>
+                              <button
+                                onClick={() => handleDeleteRivalPost(p.id)}
+                                className="text-xs px-2 py-0.5 rounded bg-red-600 hover:bg-red-500 transition-colors"
+                              >
+                                확인
+                              </button>
+                              <button
+                                onClick={() => setRivalPostDeleteConfirm(null)}
+                                className="text-xs px-2 py-0.5 rounded border border-white/20 hover:border-white/40 transition-colors"
+                              >
+                                취소
+                              </button>
+                            </>
+                          ) : (
+                            <button
+                              onClick={() => setRivalPostDeleteConfirm(p.id)}
+                              className="text-xs px-2 py-0.5 rounded border border-red-500/40 text-red-400 hover:border-red-500 transition-colors"
+                            >
+                              삭제
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {selectedRivalPostId !== null && (
+            <div className="flex flex-col gap-2">
+              <h2 className="text-sm font-semibold text-white/70">댓글</h2>
+              {rivalCommentsLoading ? (
+                <p className="text-white/40 text-sm">불러오는 중…</p>
+              ) : rivalComments.length === 0 ? (
+                <p className="text-white/30 text-sm">댓글이 없습니다.</p>
+              ) : (
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-white/10 text-white/40 text-xs">
+                      <th className="px-3 py-2 text-left font-normal w-32">작성자</th>
+                      <th className="px-3 py-2 text-left font-normal">내용</th>
+                      <th className="px-3 py-2 text-center font-normal w-32">작성일</th>
+                      <th className="px-3 py-2 w-32" />
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rivalComments.map((c) => (
+                      <tr key={c.id} className="border-b border-white/5 hover:bg-white/5">
+                        <td className="px-3 py-1.5 text-xs text-white/60">{c.dj_name} ({c.iidx_id})</td>
+                        <td className="px-3 py-1.5">{c.content}</td>
+                        <td className="px-3 py-1.5 text-xs text-center text-white/40">{c.created_at.slice(0, 16).replace("T", " ")}</td>
+                        <td className="px-3 py-1.5 w-32">
+                          {rivalCommentDeleteConfirm === c.id ? (
+                            <div className="flex gap-1 whitespace-nowrap">
+                              <button
+                                onClick={() => handleDeleteRivalComment(c.id)}
+                                className="text-xs px-2 py-0.5 rounded bg-red-600 hover:bg-red-500 transition-colors"
+                              >
+                                확인
+                              </button>
+                              <button
+                                onClick={() => setRivalCommentDeleteConfirm(null)}
+                                className="text-xs px-2 py-0.5 rounded border border-white/20 hover:border-white/40 transition-colors"
+                              >
+                                취소
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => setRivalCommentDeleteConfirm(c.id)}
+                              className="text-xs px-2 py-0.5 rounded border border-red-500/40 text-red-400 hover:border-red-500 transition-colors"
+                            >
+                              삭제
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
             </div>
           )}
         </div>

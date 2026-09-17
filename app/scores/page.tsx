@@ -237,12 +237,19 @@ function groupByUnofficialLevel(scores: ScoreItem[]) {
   return Array.from(map.entries()).sort((a, b) => parseFloat(b[0]) - parseFloat(a[0]));
 }
 
+interface UserItem {
+  iidx_id: string;
+  dj_name: string;
+}
+
 function ScoresContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
   const idParam = searchParams.get("id") ?? "";
   const [search, setSearch] = useState(idParam);
+  const [users, setUsers] = useState<UserItem[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const [level, setLevel] = useState<number | null>(12);
   const [sortByClear, setSortByClear] = useState(false);
   const [scores, setScores] = useState<ScoreItem[]>([]);
@@ -373,6 +380,10 @@ function ScoresContent() {
   }, []);
 
   useEffect(() => {
+    fetch(`${API_URL}/users`).then(r => r.json()).then(setUsers).catch(() => {});
+  }, []);
+
+  useEffect(() => {
     if (idParam) {
       setSearch(idParam);
       fetchScores(idParam, level);
@@ -390,8 +401,21 @@ function ScoresContent() {
     e.preventDefault();
     const id = search.trim().replace(/-/g, "");
     if (!id) return;
+    setShowSuggestions(false);
     router.push(`/scores?id=${id}`);
   };
+
+  const handleSelectUser = (user: UserItem) => {
+    setSearch(user.iidx_id);
+    setShowSuggestions(false);
+    router.push(`/scores?id=${user.iidx_id}`);
+  };
+
+  const rawQuery = search.trim();
+  const idQuery = rawQuery.replace(/-/g, "");
+  const suggestions = rawQuery
+    ? users.filter(u => u.iidx_id.includes(idQuery) || u.dj_name.toLowerCase().includes(rawQuery.toLowerCase())).slice(0, 8)
+    : [];
 
   const groups = groupByUnofficialLevel(scores).map(([lvKey, items]) => [
     lvKey,
@@ -406,14 +430,35 @@ function ScoresContent() {
       <h1 className="text-2xl font-bold">기록</h1>
 
       {/* 검색 */}
-      <form onSubmit={handleSearch} className="flex gap-2 items-center">
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="IIDX ID"
-          className="px-3 py-1.5 rounded border border-white/20 bg-white/5 text-sm w-48 focus:outline-none focus:border-indigo-400"
-        />
+      <form onSubmit={handleSearch} className="flex gap-2 items-center relative">
+        <div className="relative w-48">
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => { setSearch(e.target.value.replace(/[^\x21-\x7E]/g, "").slice(0, 8)); setShowSuggestions(true); }}
+            onFocus={() => setShowSuggestions(true)}
+            onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+            placeholder="닉네임 또는 IIDX ID"
+            maxLength={8}
+            className="px-3 py-1.5 rounded border border-white/20 bg-white/5 text-sm w-48 focus:outline-none focus:border-indigo-400"
+          />
+          {showSuggestions && suggestions.length > 0 && (
+            <ul className="absolute z-20 top-full left-0 mt-1 w-64 max-h-60 overflow-y-auto bg-zinc-900 border border-white/10 rounded shadow-lg">
+              {suggestions.map((u) => (
+                <li key={u.iidx_id}>
+                  <button
+                    type="button"
+                    onMouseDown={() => handleSelectUser(u)}
+                    className="w-full text-left px-3 py-1.5 text-sm hover:bg-indigo-600/30 cursor-pointer flex justify-between gap-2"
+                  >
+                    <span>{u.dj_name}</span>
+                    <span className="text-white/40 font-mono text-xs">{u.iidx_id.replace(/(\d{4})(\d{4})/, "$1-$2")}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
         <button
           type="submit"
           className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 rounded text-sm transition-colors cursor-pointer"
