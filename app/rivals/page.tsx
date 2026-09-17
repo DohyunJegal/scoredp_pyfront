@@ -194,23 +194,25 @@ function WriteModal({ onClose, onCreated }: { onClose: () => void; onCreated: (p
           <DanSelect label="DP" value={dpDan} onChange={setDpDan} />
         </div>
 
-        <div className="flex gap-4 text-xs text-white/60">
-          링크 첨부
-          <label className="flex items-center gap-1.5 cursor-pointer">
-            <input type="checkbox" checked={attachScoredp} disabled={!iidxId.trim()}
-              onChange={(e) => setAttachScoredp(e.target.checked)} />
-            scoredp
-          </label>
-          <label className="flex items-center gap-1.5 cursor-pointer">
-            <input type="checkbox" checked={attachOhsorry} disabled={!iidxId.trim()}
-              onChange={(e) => setAttachOhsorry(e.target.checked)} />
-            오소리넷
-          </label>
-          <label className="flex items-center gap-1.5 cursor-pointer">
-            <input type="checkbox" checked={attachEreter} disabled={!iidxId.trim()}
-              onChange={(e) => setAttachEreter(e.target.checked)} />
-            이레터넷
-          </label>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-4 text-xs text-white/60">
+          <span>링크 첨부</span>
+          <div className="flex flex-wrap gap-x-4 gap-y-1.5">
+            <label className="flex items-center gap-1.5 cursor-pointer whitespace-nowrap">
+              <input type="checkbox" checked={attachScoredp} disabled={!iidxId.trim()}
+                onChange={(e) => setAttachScoredp(e.target.checked)} />
+              scoredp
+            </label>
+            <label className="flex items-center gap-1.5 cursor-pointer whitespace-nowrap">
+              <input type="checkbox" checked={attachOhsorry} disabled={!iidxId.trim()}
+                onChange={(e) => setAttachOhsorry(e.target.checked)} />
+              오소리넷
+            </label>
+            <label className="flex items-center gap-1.5 cursor-pointer whitespace-nowrap">
+              <input type="checkbox" checked={attachEreter} disabled={!iidxId.trim()}
+                onChange={(e) => setAttachEreter(e.target.checked)} />
+              이레터넷
+            </label>
+          </div>
         </div>
 
         {error && <p className="text-red-400 text-xs">{error}</p>}
