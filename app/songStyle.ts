@@ -5,7 +5,7 @@ export const CHART_STYLE: Record<string, { color: string; prefix: string }> = {
 };
 
 const NEWEST_VERSION_COLOR = "#4ade80";
-export const CURRENT_VERSION_ID = 34;
+export const CURRENT_VERSION_ID = 35;
 
 export function getTitleColor(chart: string, versionId: number | null | undefined): string {
   if (versionId != null && versionId === CURRENT_VERSION_ID) return NEWEST_VERSION_COLOR;
