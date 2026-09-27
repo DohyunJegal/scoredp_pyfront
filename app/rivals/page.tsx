@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, Suspense } from "react";
+import { useEffect, useState, useCallback, useRef, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useT, useDanOptions, useDanLabel } from "../lib/i18n";
 
@@ -252,16 +252,26 @@ function WriteModal({ onClose, onCreated }: { onClose: () => void; onCreated: (p
 // 리스트
 function RivalsList() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [posts, setPosts] = useState<RivalPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [showWrite, setShowWrite] = useState(false);
 
-  const [query, setQuery] = useState("");
-  const [spDanFilter, setSpDanFilter] = useState<number | null>(null);
-  const [dpDanFilter, setDpDanFilter] = useState<number | null>(null);
-  const [spArenaFilter, setSpArenaFilter] = useState<string | null>(null);
-  const [dpArenaFilter, setDpArenaFilter] = useState<string | null>(null);
-  const [page, setPage] = useState(1);
+  const [query, setQuery] = useState(() => searchParams.get("q") ?? "");
+  const [spDanFilter, setSpDanFilter] = useState<number | null>(() => {
+    const v = searchParams.get("sp_dan");
+    return v ? Number(v) : null;
+  });
+  const [dpDanFilter, setDpDanFilter] = useState<number | null>(() => {
+    const v = searchParams.get("dp_dan");
+    return v ? Number(v) : null;
+  });
+  const [spArenaFilter, setSpArenaFilter] = useState<string | null>(() => searchParams.get("sp_arena"));
+  const [dpArenaFilter, setDpArenaFilter] = useState<string | null>(() => searchParams.get("dp_arena"));
+  const [page, setPage] = useState(() => {
+    const v = searchParams.get("page");
+    return v ? Number(v) : 1;
+  });
   const [hasMore, setHasMore] = useState(false);
   const [total, setTotal] = useState(0);
   const t = useT();
@@ -271,14 +281,18 @@ function RivalsList() {
   const fetchPosts = useCallback(async (targetPage: number) => {
     setLoading(true);
     try {
-      const url = new URL(`${API_URL}/rivals`);
-      if (query.trim()) url.searchParams.set("q", query.trim());
-      if (spDanFilter) url.searchParams.set("sp_dan", String(spDanFilter));
-      if (dpDanFilter) url.searchParams.set("dp_dan", String(dpDanFilter));
-      if (spArenaFilter) url.searchParams.set("sp_arena", spArenaFilter);
-      if (dpArenaFilter) url.searchParams.set("dp_arena", dpArenaFilter);
-      url.searchParams.set("page", String(targetPage));
-      const res = await fetch(url.toString());
+      const params = new URLSearchParams();
+      if (query.trim()) params.set("q", query.trim());
+      if (spDanFilter) params.set("sp_dan", String(spDanFilter));
+      if (dpDanFilter) params.set("dp_dan", String(dpDanFilter));
+      if (spArenaFilter) params.set("sp_arena", spArenaFilter);
+      if (dpArenaFilter) params.set("dp_arena", dpArenaFilter);
+      if (targetPage > 1) params.set("page", String(targetPage));
+      // 목록 상태를 URL에 반영해 게시물에서 뒤로가기로 돌아왔을 때 페이지와 필터 유지
+      router.replace(`/rivals${params.toString() ? `?${params.toString()}` : ""}`, { scroll: false });
+
+      params.set("page", String(targetPage));
+      const res = await fetch(`${API_URL}/rivals?${params.toString()}`);
       const data = await res.json();
       setPosts(data.items ?? []);
       setHasMore(!!data.has_more);
@@ -291,12 +305,23 @@ function RivalsList() {
     } finally {
       setLoading(false);
     }
-  }, [query, spDanFilter, dpDanFilter, spArenaFilter, dpArenaFilter]);
+  }, [query, spDanFilter, dpDanFilter, spArenaFilter, dpArenaFilter, router]);
 
-  // 검색어나 필터가 바뀔 때마다 1페이지부터 자동 검색
+  // 최초 마운트 시엔 URL에 저장된 페이지를 그대로 불러오고, 이후 검색어/필터 값이 실제로 바뀔 때만 1페이지로 재검색
+  const filtersKey = JSON.stringify([query, spDanFilter, dpDanFilter, spArenaFilter, dpArenaFilter]);
+  const didMount = useRef(false);
+  const prevFiltersKey = useRef(filtersKey);
   useEffect(() => {
-    const t = setTimeout(() => fetchPosts(1), 300);
-    return () => clearTimeout(t);
+    if (!didMount.current) {
+      didMount.current = true;
+      fetchPosts(page);
+      return;
+    }
+    if (prevFiltersKey.current === filtersKey) return;
+    prevFiltersKey.current = filtersKey;
+    const timer = setTimeout(() => fetchPosts(1), 300);
+    return () => clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetchPosts]);
 
   const handleReset = () => {

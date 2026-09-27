@@ -156,6 +156,9 @@ const dict = {
   "random.picking": { ko: "뽑는 중", ja: "選択中", en: "Picking..." },
   "random.noSongs": { ko: "해당 범위에 곡이 없습니다", ja: "該当範囲に曲がありません", en: "No songs in that range" },
   "random.error": { ko: "오류가 발생했습니다", ja: "エラーが発生しました", en: "An error occurred" },
+
+  "notFound.title": { ko: "페이지를 찾을 수 없습니다", ja: "ページが見つかりません", en: "Page not found" },
+  "notFound.subtitle": { ko: "배고파서 먹어버렸을지도 몰라요...", ja: "お腹が空いて食べられちゃったのかも…", en: "Maybe it got hungry and ate it..." },
 } satisfies Record<string, Record<Locale, string>>;
 
 export type TKey = keyof typeof dict;
