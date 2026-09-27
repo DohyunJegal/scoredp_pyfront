@@ -2,15 +2,9 @@
 
 import { useEffect, useState, useCallback, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import { useT, useDanOptions, useDanLabel } from "../lib/i18n";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
-
-const DAN_LABELS = ["초단", "2단", "3단", "4단", "5단", "6단", "7단", "8단", "9단", "10단", "중전", "개전"];
-const DAN_OPTIONS = DAN_LABELS.map((label, i) => ({ value: i + 1, label })).reverse();
-
-function danLabel(v: number | null): string {
-  return v != null ? (DAN_LABELS[v - 1] ?? "-") : "-";
-}
 
 // 아레나 클래스
 const ARENA_OPTIONS = ["A1", "A2", "A3", "A4", "A5", "B1", "B2", "B3", "B4", "B5", "C1", "C2", "C3", "C4", "C5"]
@@ -95,6 +89,7 @@ function RankSelect<T extends string | number>({ label, value, onChange, options
   onChange: (v: T | null) => void;
   options: { value: T; label: string }[];
 }) {
+  const t = useT();
   return (
     <label className="flex items-center gap-1.5 text-xs text-white/60">
       {label}
@@ -106,7 +101,7 @@ function RankSelect<T extends string | number>({ label, value, onChange, options
         }}
         className="px-2 py-1 rounded border border-white/20 bg-zinc-800 text-white text-xs focus:outline-none focus:border-indigo-400"
       >
-        <option value="">전체</option>
+        <option value="">{t("common.all")}</option>
         {options.map((o) => (
           <option key={o.value} value={o.value}>{o.label}</option>
         ))}
@@ -131,6 +126,8 @@ function WriteModal({ onClose, onCreated }: { onClose: () => void; onCreated: (p
   const [attachEreter, setAttachEreter] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const t = useT();
+  const DAN_OPTIONS = useDanOptions();
 
   const canSubmit = iidxId.trim() && djName.trim() && password.trim() && title.trim() && content.trim();
 
@@ -172,13 +169,13 @@ function WriteModal({ onClose, onCreated }: { onClose: () => void; onCreated: (p
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
       <div className="bg-zinc-900 border border-white/10 rounded-xl p-5 w-full max-w-md flex flex-col gap-3 max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center">
-          <span className="text-sm font-semibold">라이벌 찾기</span>
+          <span className="text-sm font-semibold">{t("rivals.title")}</span>
           <button onClick={onClose} className="text-white/40 hover:text-white/70 cursor-pointer">✕</button>
         </div>
 
         <div className="flex gap-2">
           <input
-            type="text" placeholder="닉네임" value={djName} maxLength={6}
+            type="text" placeholder={t("common.nickname")} value={djName} maxLength={6}
             onChange={(e) => setDjName(djNameFilter(e.target.value))}
             className="w-20 shrink-0 px-2 py-1.5 rounded border border-white/20 bg-white/5 text-sm focus:outline-none focus:border-indigo-400"
           />
@@ -188,37 +185,37 @@ function WriteModal({ onClose, onCreated }: { onClose: () => void; onCreated: (p
             className="w-24 shrink-0 px-2 py-1.5 rounded border border-white/20 bg-white/5 text-sm focus:outline-none focus:border-indigo-400"
           />
           <input
-            type="password" autoComplete="new-password" placeholder="비밀번호" value={password} maxLength={72}
+            type="password" autoComplete="new-password" placeholder={t("common.password")} value={password} maxLength={72}
             onChange={(e) => setPassword(asciiOnly(e.target.value))}
             className="flex-1 min-w-0 px-3 py-1.5 rounded border border-white/20 bg-white/5 text-sm focus:outline-none focus:border-indigo-400"
           />
         </div>
 
         <input
-          type="text" placeholder="제목" value={title} maxLength={60}
+          type="text" placeholder={t("rivals.titlePlaceholder")} value={title} maxLength={60}
           onChange={(e) => setTitle(noAngleBrackets(e.target.value))}
           className="px-3 py-1.5 rounded border border-white/20 bg-white/5 text-sm focus:outline-none focus:border-indigo-400"
         />
 
         <textarea
-          placeholder={"내용\n\n과도한 욕설이나 정치 관련, 지역감정, 혐오 표현 등 부적절한 표현을 사용하면 삭제될 수 있습니다."} value={content} maxLength={1000} rows={5}
+          placeholder={t("rivals.contentPlaceholder")} value={content} maxLength={1000} rows={5}
           onChange={(e) => setContent(noAngleBrackets(e.target.value))}
           className="px-3 py-1.5 rounded border border-white/20 bg-white/5 text-sm resize-none focus:outline-none focus:border-indigo-400"
         />
 
         <div className="flex flex-wrap items-center gap-3">
-          <span className="text-xs text-white/60">단위</span>
+          <span className="text-xs text-white/60">{t("rivals.dan")}</span>
           <RankSelect label="SP" options={DAN_OPTIONS} value={spDan} onChange={setSpDan} />
           <RankSelect label="DP" options={DAN_OPTIONS} value={dpDan} onChange={setDpDan} />
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <span className="text-xs text-white/60">아레나</span>
+          <span className="text-xs text-white/60">{t("rivals.arena")}</span>
           <RankSelect label="SP" options={ARENA_OPTIONS} value={spArena} onChange={setSpArena} />
           <RankSelect label="DP" options={ARENA_OPTIONS} value={dpArena} onChange={setDpArena} />
         </div>
 
         <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-4 text-xs text-white/60">
-          <span>링크 첨부</span>
+          <span>{t("rivals.linkAttach")}</span>
           <div className="flex flex-wrap gap-x-4 gap-y-1.5">
             <label className="flex items-center gap-1.5 cursor-pointer whitespace-nowrap">
               <input type="checkbox" checked={attachScoredp} disabled={!iidxId.trim()}
@@ -241,10 +238,10 @@ function WriteModal({ onClose, onCreated }: { onClose: () => void; onCreated: (p
         {error && <p className="text-red-400 text-xs">{error}</p>}
 
         <div className="flex gap-2 justify-end">
-          <button onClick={onClose} className="px-3 py-1.5 text-sm text-white/50 hover:text-white/80 cursor-pointer">취소</button>
+          <button onClick={onClose} className="px-3 py-1.5 text-sm text-white/50 hover:text-white/80 cursor-pointer">{t("common.cancel")}</button>
           <button onClick={handleSubmit} disabled={!canSubmit || saving}
             className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 rounded text-sm transition-colors cursor-pointer">
-            {saving ? "등록 중..." : "등록"}
+            {saving ? t("rivals.registering") : t("rivals.register")}
           </button>
         </div>
       </div>
@@ -267,6 +264,9 @@ function RivalsList() {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
   const [total, setTotal] = useState(0);
+  const t = useT();
+  const DAN_OPTIONS = useDanOptions();
+  const danLabel = useDanLabel();
 
   const fetchPosts = useCallback(async (targetPage: number) => {
     setLoading(true);
@@ -309,40 +309,40 @@ function RivalsList() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-bold">라이벌 찾기</h1>
+      <h1 className="text-2xl font-bold">{t("rivals.title")}</h1>
 
       <div className="flex flex-col gap-2">
         <div className="flex gap-2 items-center">
           <input
-            type="text" placeholder="닉네임 또는 IIDX ID" value={query} maxLength={8}
+            type="text" placeholder={t("common.searchPlaceholder")} value={query} maxLength={8}
             onChange={(e) => setQuery(djNameFilter(e.target.value))}
             className="w-28 sm:w-56 px-3 py-1.5 rounded border border-white/20 bg-white/5 text-sm focus:outline-none focus:border-indigo-400"
           />
           <button type="button" onClick={handleReset}
             className="px-3 py-1.5 border border-white/20 hover:border-white/40 rounded text-sm transition-colors cursor-pointer">
-            초기화
+            {t("rivals.reset")}
           </button>
           <button type="button" onClick={() => setShowWrite(true)}
             className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 rounded text-sm transition-colors cursor-pointer">
-            글쓰기
+            {t("rivals.write")}
           </button>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs text-white/60">단위</span>
+          <span className="text-xs text-white/60">{t("rivals.dan")}</span>
           <RankSelect label="SP" options={DAN_OPTIONS} value={spDanFilter} onChange={setSpDanFilter} />
           <RankSelect label="DP" options={DAN_OPTIONS} value={dpDanFilter} onChange={setDpDanFilter} />
           {/* 모바일에서만 단/아레나 사이 줄바꿈 강제 */}
           <div className="basis-full sm:hidden" />
-          <span className="text-xs text-white/60">아레나</span>
+          <span className="text-xs text-white/60">{t("rivals.arena")}</span>
           <RankSelect label="SP" options={ARENA_OPTIONS} value={spArenaFilter} onChange={setSpArenaFilter} />
           <RankSelect label="DP" options={ARENA_OPTIONS} value={dpArenaFilter} onChange={setDpArenaFilter} />
         </div>
       </div>
 
       {loading ? (
-        <p className="text-white/40 text-sm">불러오는 중...</p>
+        <p className="text-white/40 text-sm">{t("common.loadingSimple")}</p>
       ) : posts.length === 0 ? (
-        <p className="text-white/40 text-sm">글이 없습니다.</p>
+        <p className="text-white/40 text-sm">{t("rivals.noPosts")}</p>
       ) : (
         <div className="flex flex-col gap-2">
           {posts.map((p) => (
@@ -373,7 +373,7 @@ function RivalsList() {
         <div className="flex gap-1.5 justify-center items-center">
           <button type="button" onClick={() => fetchPosts(page - 1)} disabled={page <= 1}
             className="px-3 py-1.5 border border-white/20 hover:border-white/40 disabled:opacity-30 disabled:cursor-not-allowed rounded text-sm transition-colors cursor-pointer">
-            이전
+            {t("rivals.prev")}
           </button>
           {pageWindow(page, Math.max(1, Math.ceil(total / PAGE_SIZE))).map((p) => (
             <button key={p} type="button" onClick={() => fetchPosts(p)}
@@ -385,7 +385,7 @@ function RivalsList() {
           ))}
           <button type="button" onClick={() => fetchPosts(page + 1)} disabled={!hasMore}
             className="px-3 py-1.5 border border-white/20 hover:border-white/40 disabled:opacity-30 disabled:cursor-not-allowed rounded text-sm transition-colors cursor-pointer">
-            다음
+            {t("rivals.next")}
           </button>
         </div>
       )}
@@ -411,6 +411,7 @@ function CommentRow({ comment, onDeleted }: { comment: RivalComment; onDeleted: 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [liveContent, setLiveContent] = useState(comment.content);
+  const t = useT();
 
   const startVerify = () => { setVerifyMode(true); setDeleteMode(false); setPassword(""); setError(null); };
   const startDelete = () => { setDeleteMode(true); setVerifyMode(false); setPassword(""); setError(null); };
@@ -426,7 +427,7 @@ function CommentRow({ comment, onDeleted }: { comment: RivalComment; onDeleted: 
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ password }),
       });
-      if (res.status === 401) { setError("비밀번호가 올바르지 않습니다."); return; }
+      if (res.status === 401) { setError(t("common.wrongPassword")); return; }
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       setVerifiedPassword(password);
       setPassword("");
@@ -448,7 +449,7 @@ function CommentRow({ comment, onDeleted }: { comment: RivalComment; onDeleted: 
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ password: verifiedPassword, content }),
       });
-      if (res.status === 401) { setError("비밀번호가 올바르지 않습니다."); return; }
+      if (res.status === 401) { setError(t("common.wrongPassword")); return; }
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       setLiveContent(content);
       setEditMode(false);
@@ -469,7 +470,7 @@ function CommentRow({ comment, onDeleted }: { comment: RivalComment; onDeleted: 
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ password }),
       });
-      if (res.status === 401) { setError("비밀번호가 올바르지 않습니다."); return; }
+      if (res.status === 401) { setError(t("common.wrongPassword")); return; }
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       onDeleted(comment.id);
     } catch (e) {
@@ -490,28 +491,28 @@ function CommentRow({ comment, onDeleted }: { comment: RivalComment; onDeleted: 
         <>
           <p className="text-sm whitespace-pre-wrap break-words"><Linkify text={liveContent} /></p>
           <div className="flex gap-2 justify-end">
-            <button onClick={startVerify} className="text-xs text-white/30 hover:text-white/60 cursor-pointer">수정</button>
-            <button onClick={startDelete} className="text-xs text-white/30 hover:text-red-400 cursor-pointer">삭제</button>
+            <button onClick={startVerify} className="text-xs text-white/30 hover:text-white/60 cursor-pointer">{t("common.edit")}</button>
+            <button onClick={startDelete} className="text-xs text-white/30 hover:text-red-400 cursor-pointer">{t("common.delete")}</button>
           </div>
           {verifyMode && (
             <div className="flex gap-2 items-center justify-end">
-              <input type="password" autoComplete="new-password" placeholder="비밀번호" value={password} maxLength={72}
+              <input type="password" autoComplete="new-password" placeholder={t("common.password")} value={password} maxLength={72}
                 onChange={(e) => setPassword(asciiOnly(e.target.value))}
                 onKeyDown={(e) => e.key === "Enter" && handleVerify()}
                 className="px-2 py-1 rounded border border-white/20 bg-white/5 text-xs w-32 focus:outline-none focus:border-indigo-400" />
               <button onClick={handleVerify} disabled={busy || !password}
-                className="text-xs px-2 py-1 rounded bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 cursor-pointer">확인</button>
-              <button onClick={cancelPrompt} className="text-xs px-2 py-1 text-white/40 hover:text-white/70 cursor-pointer">취소</button>
+                className="text-xs px-2 py-1 rounded bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 cursor-pointer">{t("common.confirm")}</button>
+              <button onClick={cancelPrompt} className="text-xs px-2 py-1 text-white/40 hover:text-white/70 cursor-pointer">{t("common.cancel")}</button>
             </div>
           )}
           {deleteMode && (
             <div className="flex gap-2 items-center justify-end">
-              <input type="password" autoComplete="new-password" placeholder="비밀번호" value={password} maxLength={72}
+              <input type="password" autoComplete="new-password" placeholder={t("common.password")} value={password} maxLength={72}
                 onChange={(e) => setPassword(asciiOnly(e.target.value))}
                 className="px-2 py-1 rounded border border-white/20 bg-white/5 text-xs w-32 focus:outline-none focus:border-indigo-400" />
               <button onClick={handleDelete} disabled={busy || !password}
-                className="text-xs px-2 py-1 rounded bg-red-600 hover:bg-red-500 disabled:opacity-50 cursor-pointer">확인</button>
-              <button onClick={cancelPrompt} className="text-xs px-2 py-1 text-white/40 hover:text-white/70 cursor-pointer">취소</button>
+                className="text-xs px-2 py-1 rounded bg-red-600 hover:bg-red-500 disabled:opacity-50 cursor-pointer">{t("common.confirm")}</button>
+              <button onClick={cancelPrompt} className="text-xs px-2 py-1 text-white/40 hover:text-white/70 cursor-pointer">{t("common.cancel")}</button>
             </div>
           )}
           {error && <p className="text-red-400 text-xs text-right">{error}</p>}
@@ -523,8 +524,8 @@ function CommentRow({ comment, onDeleted }: { comment: RivalComment; onDeleted: 
             className="px-2 py-1 rounded border border-white/20 bg-white/5 text-sm resize-none focus:outline-none focus:border-indigo-400" />
           <div className="flex gap-2 items-center justify-end">
             <button onClick={handleEdit} disabled={busy || !content.trim()}
-              className="text-xs px-2 py-1 rounded bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 cursor-pointer">저장</button>
-            <button onClick={cancelEdit} className="text-xs px-2 py-1 text-white/40 hover:text-white/70 cursor-pointer">취소</button>
+              className="text-xs px-2 py-1 rounded bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 cursor-pointer">{t("common.save")}</button>
+            <button onClick={cancelEdit} className="text-xs px-2 py-1 text-white/40 hover:text-white/70 cursor-pointer">{t("common.cancel")}</button>
           </div>
           {error && <p className="text-red-400 text-xs">{error}</p>}
         </div>
@@ -541,6 +542,7 @@ function CommentForm({ postId, onCreated }: { postId: number; onCreated: (c: Riv
   const [content, setContent] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const t = useT();
 
   const canSubmit = iidxId.trim() && djName.trim() && password.trim() && content.trim();
 
@@ -569,23 +571,23 @@ function CommentForm({ postId, onCreated }: { postId: number; onCreated: (c: Riv
   return (
     <div className="flex flex-col gap-2 pt-3">
       <div className="flex gap-2">
-        <input type="text" placeholder="닉네임" value={djName} maxLength={6}
+        <input type="text" placeholder={t("common.nickname")} value={djName} maxLength={6}
           onChange={(e) => setDjName(djNameFilter(e.target.value))}
           className="w-20 shrink-0 px-2 py-1.5 rounded border border-white/20 bg-white/5 text-sm focus:outline-none focus:border-indigo-400" />
         <input type="text" placeholder="IIDX ID" value={iidxId} maxLength={8}
           onChange={(e) => setIidxId(digitsOnly(e.target.value))}
           className="w-24 shrink-0 px-2 py-1.5 rounded border border-white/20 bg-white/5 text-sm focus:outline-none focus:border-indigo-400" />
-        <input type="password" autoComplete="new-password" placeholder="비밀번호" value={password} maxLength={72}
+        <input type="password" autoComplete="new-password" placeholder={t("common.password")} value={password} maxLength={72}
           onChange={(e) => setPassword(asciiOnly(e.target.value))}
           className="flex-1 min-w-0 px-2 py-1.5 rounded border border-white/20 bg-white/5 text-sm focus:outline-none focus:border-indigo-400" />
       </div>
       <div className="flex gap-2">
-        <textarea placeholder={"댓글\n과도한 욕설이나 정치 관련, 지역감정, 혐오 표현 등 부적절한 표현을 사용하면 삭제될 수 있습니다."} value={content} maxLength={300} rows={2}
+        <textarea placeholder={t("rivals.commentPlaceholder")} value={content} maxLength={300} rows={2}
           onChange={(e) => setContent(noAngleBrackets(e.target.value))}
           className="flex-1 min-w-0 px-3 py-1.5 rounded border border-white/20 bg-white/5 text-sm resize-none focus:outline-none focus:border-indigo-400" />
         <button onClick={handleSubmit} disabled={!canSubmit || busy}
           className="px-4 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 rounded text-sm transition-colors cursor-pointer">
-          등록
+          {t("rivals.register")}
         </button>
       </div>
       {error && <p className="text-red-400 text-xs">{error}</p>}
@@ -614,6 +616,9 @@ function RivalDetail({ postId }: { postId: number }) {
   const [content, setContent] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const t = useT();
+  const DAN_OPTIONS = useDanOptions();
+  const danLabel = useDanLabel();
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -656,7 +661,7 @@ function RivalDetail({ postId }: { postId: number }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ password }),
       });
-      if (res.status === 401) { setError("비밀번호가 올바르지 않습니다."); return; }
+      if (res.status === 401) { setError(t("common.wrongPassword")); return; }
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       setVerifiedPassword(password);
       setPassword("");
@@ -681,7 +686,7 @@ function RivalDetail({ postId }: { postId: number }) {
           sp_arena: spArena, dp_arena: dpArena, title, content,
         }),
       });
-      if (res.status === 401) { setError("비밀번호가 올바르지 않습니다."); return; }
+      if (res.status === 401) { setError(t("common.wrongPassword")); return; }
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       setPost(await res.json());
       setEditMode(false); setVerifiedPassword("");
@@ -701,7 +706,7 @@ function RivalDetail({ postId }: { postId: number }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ password }),
       });
-      if (res.status === 401) { setError("비밀번호가 올바르지 않습니다."); return; }
+      if (res.status === 401) { setError(t("common.wrongPassword")); return; }
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       router.push("/rivals");
     } catch (e) {
@@ -711,12 +716,12 @@ function RivalDetail({ postId }: { postId: number }) {
     }
   };
 
-  if (loading) return <p className="text-white/40 text-sm">불러오는 중...</p>;
-  if (notFound || !post) return <p className="text-white/40 text-sm">글을 찾을 수 없습니다.</p>;
+  if (loading) return <p className="text-white/40 text-sm">{t("common.loadingSimple")}</p>;
+  if (notFound || !post) return <p className="text-white/40 text-sm">{t("rivals.notFound")}</p>;
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-bold cursor-pointer hover:text-white/80" onClick={() => router.push("/rivals")}>라이벌 찾기</h1>
+      <h1 className="text-2xl font-bold cursor-pointer hover:text-white/80" onClick={() => router.push("/rivals")}>{t("rivals.title")}</h1>
 
       <div className="flex flex-col gap-3">
         {!editMode ? (
@@ -736,29 +741,29 @@ function RivalDetail({ postId }: { postId: number }) {
             </div>
             <p className="text-sm whitespace-pre-wrap break-words"><Linkify text={post.content} /></p>
             <div className="flex gap-3 justify-end">
-              <button onClick={startVerify} className="text-xs text-white/40 hover:text-white/70 cursor-pointer">수정</button>
+              <button onClick={startVerify} className="text-xs text-white/40 hover:text-white/70 cursor-pointer">{t("common.edit")}</button>
               <button onClick={() => { setDeleteMode(true); setVerifyMode(false); setPassword(""); setError(null); }}
-                className="text-xs text-white/40 hover:text-red-400 cursor-pointer">삭제</button>
+                className="text-xs text-white/40 hover:text-red-400 cursor-pointer">{t("common.delete")}</button>
             </div>
             {verifyMode && (
               <div className="flex gap-2 items-center justify-end">
-                <input type="password" autoComplete="new-password" placeholder="비밀번호" value={password} maxLength={72}
+                <input type="password" autoComplete="new-password" placeholder={t("common.password")} value={password} maxLength={72}
                   onChange={(e) => setPassword(asciiOnly(e.target.value))}
                   onKeyDown={(e) => e.key === "Enter" && handleVerify()}
                   className="px-2 py-1 rounded border border-white/20 bg-white/5 text-xs w-32 focus:outline-none focus:border-indigo-400" />
                 <button onClick={handleVerify} disabled={busy || !password}
-                  className="text-xs px-2 py-1 rounded bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 cursor-pointer">확인</button>
-                <button onClick={() => { setVerifyMode(false); setError(null); }} className="text-xs px-2 py-1 text-white/40 hover:text-white/70 cursor-pointer">취소</button>
+                  className="text-xs px-2 py-1 rounded bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 cursor-pointer">{t("common.confirm")}</button>
+                <button onClick={() => { setVerifyMode(false); setError(null); }} className="text-xs px-2 py-1 text-white/40 hover:text-white/70 cursor-pointer">{t("common.cancel")}</button>
               </div>
             )}
             {deleteMode && (
               <div className="flex gap-2 items-center justify-end">
-                <input type="password" autoComplete="new-password" placeholder="비밀번호" value={password} maxLength={72}
+                <input type="password" autoComplete="new-password" placeholder={t("common.password")} value={password} maxLength={72}
                   onChange={(e) => setPassword(asciiOnly(e.target.value))}
                   className="px-2 py-1 rounded border border-white/20 bg-white/5 text-xs w-32 focus:outline-none focus:border-indigo-400" />
                 <button onClick={handleDelete} disabled={busy || !password}
-                  className="text-xs px-2 py-1 rounded bg-red-600 hover:bg-red-500 disabled:opacity-50 cursor-pointer">삭제 확인</button>
-                <button onClick={() => { setDeleteMode(false); setError(null); }} className="text-xs px-2 py-1 text-white/40 hover:text-white/70 cursor-pointer">취소</button>
+                  className="text-xs px-2 py-1 rounded bg-red-600 hover:bg-red-500 disabled:opacity-50 cursor-pointer">{t("rivals.deleteConfirm")}</button>
+                <button onClick={() => { setDeleteMode(false); setError(null); }} className="text-xs px-2 py-1 text-white/40 hover:text-white/70 cursor-pointer">{t("common.cancel")}</button>
               </div>
             )}
             {error && <p className="text-red-400 text-xs text-right">{error}</p>}
@@ -767,35 +772,35 @@ function RivalDetail({ postId }: { postId: number }) {
           <>
             <span className="text-xs text-white/40">{post.dj_name} ({formatId(post.iidx_id)})</span>
             <div className="flex flex-wrap items-center gap-3">
-              <span className="text-xs text-white/60">단위</span>
+              <span className="text-xs text-white/60">{t("rivals.dan")}</span>
               <RankSelect label="SP" options={DAN_OPTIONS} value={spDan} onChange={setSpDan} />
               <RankSelect label="DP" options={DAN_OPTIONS} value={dpDan} onChange={setDpDan} />
               <div className="basis-full sm:hidden" />
-              <span className="text-xs text-white/60">아레나</span>
+              <span className="text-xs text-white/60">{t("rivals.arena")}</span>
               <RankSelect label="SP" options={ARENA_OPTIONS} value={spArena} onChange={setSpArena} />
               <RankSelect label="DP" options={ARENA_OPTIONS} value={dpArena} onChange={setDpArena} />
             </div>
-            <input type="text" placeholder="제목" value={title} maxLength={60}
+            <input type="text" placeholder={t("rivals.titlePlaceholder")} value={title} maxLength={60}
               onChange={(e) => setTitle(noAngleBrackets(e.target.value))}
               className="px-3 py-1.5 rounded border border-white/20 bg-white/5 text-sm focus:outline-none focus:border-indigo-400" />
-            <textarea placeholder="내용" value={content} maxLength={1000} rows={5}
+            <textarea placeholder={t("rivals.contentPlaceholderSimple")} value={content} maxLength={1000} rows={5}
               onChange={(e) => setContent(noAngleBrackets(e.target.value))}
               className="px-3 py-1.5 rounded border border-white/20 bg-white/5 text-sm resize-none focus:outline-none focus:border-indigo-400" />
             {error && <p className="text-red-400 text-xs">{error}</p>}
             <div className="flex gap-2 justify-end">
-              <button onClick={cancelEdit} className="px-3 py-1.5 text-sm text-white/50 hover:text-white/80 cursor-pointer">취소</button>
+              <button onClick={cancelEdit} className="px-3 py-1.5 text-sm text-white/50 hover:text-white/80 cursor-pointer">{t("common.cancel")}</button>
               <button onClick={handleSaveEdit} disabled={busy || !title.trim() || !content.trim()}
-                className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 rounded text-sm transition-colors cursor-pointer">저장</button>
+                className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 rounded text-sm transition-colors cursor-pointer">{t("common.save")}</button>
             </div>
           </>
         )}
         <button onClick={() => router.push("/rivals")} className="text-sm text-white/40 hover:text-white/70 self-end cursor-pointer">
-          ← 목록으로
+          {t("rivals.backToList")}
         </button>
       </div>
 
       <div className="flex flex-col gap-1">
-        <h2 className="text-sm font-semibold text-white/70">댓글 {comments.length}</h2>
+        <h2 className="text-sm font-semibold text-white/70">{t("rivals.commentsCountPrefix")}{comments.length}</h2>
         {comments.map((c) => (
           <CommentRow key={c.id} comment={c} onDeleted={(id) => setComments((prev) => prev.filter((x) => x.id !== id))} />
         ))}

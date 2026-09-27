@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useT } from "./lib/i18n";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 const bookmarklet = `javascript:$.getScript("${API_URL}/c");`;
@@ -8,6 +9,7 @@ const bookmarklet_p = `javascript:$.getScript("${API_URL}/p");`;
 
 export default function HomePage() {
   const [copiedType, setCopiedType] = useState<string | null>(null);
+  const t = useT();
 
   const handleCopy = (text: string, type: string) => {
     navigator.clipboard.writeText(text).then(() => {
@@ -22,23 +24,23 @@ export default function HomePage() {
         <h1 className="text-3xl font-bold mb-2">
           score<span className="text-indigo-400">dp</span>
         </h1>
-        <p className="text-white/60">beatmania IIDX DP 서열표 기록 사이트</p>
+        <p className="text-white/60">{t("home.subtitle")}</p>
       </section>
 
       <section className="flex flex-col gap-3">
-        <h2 className="text-lg font-semibold">데이터 수집 방법</h2>
+        <h2 className="text-lg font-semibold">{t("home.collect.title")}</h2>
         <ol className="list-decimal list-inside flex flex-col gap-2 text-sm text-white/80 leading-relaxed">
           <li>
             <a href="https://p.eagate.573.jp" target="_blank" className="text-indigo-400 underline">
               e-amusement
             </a>
-            에 로그인합니다.
+            {t("home.loginSuffix")}
           </li>
           <li>
-            베이직 코스에 가입하지 않으셨다면, 가입을 진행합니다.
+            {t("home.collect.step2")}
           </li>
           <li>
-            페이지에서 f12를 누른 뒤, 콘솔에 아래 코드를 입력합니다.
+            {t("home.collect.step3")}
             <div className="mt-2 flex items-center gap-2">
               <code className="block flex-1 bg-white/5 border border-white/10 rounded px-3 py-2 text-xs font-mono break-all">
                 {bookmarklet}
@@ -47,25 +49,25 @@ export default function HomePage() {
                 onClick={() => handleCopy(bookmarklet, "c")}
                 className="shrink-0 px-3 py-2 rounded border border-white/20 bg-white/5 hover:bg-white/10 text-xs transition-colors"
               >
-                {copiedType === "c" ? "완료" : "복사"}
+                {copiedType === "c" ? t("home.copied") : t("home.copy")}
               </button>
             </div>
           </li>
-          <li>크롤러가 정보를 수집해 서버에 전송합니다.</li>
+          <li>{t("home.collect.step4")}</li>
         </ol>
       </section>
 
       <section className="flex flex-col gap-3">
-        <h2 className="text-lg font-semibold">배치 기록 방법</h2>
+        <h2 className="text-lg font-semibold">{t("home.batch.title")}</h2>
         <ol className="list-decimal list-inside flex flex-col gap-2 text-sm text-white/80 leading-relaxed">
           <li>
             <a href="https://p.eagate.573.jp" target="_blank" className="text-indigo-400 underline">
               e-amusement
             </a>
-            에 로그인합니다.
+            {t("home.loginSuffix")}
           </li>
           <li>
-            페이지에서 f12를 누른 뒤, 콘솔에 아래 코드를 입력합니다.
+            {t("home.collect.step3")}
             <div className="mt-2 flex items-center gap-2">
               <code className="block flex-1 bg-white/5 border border-white/10 rounded px-3 py-2 text-xs font-mono break-all">
                 {bookmarklet_p}
@@ -74,36 +76,36 @@ export default function HomePage() {
                 onClick={() => handleCopy(bookmarklet_p, "p")}
                 className="shrink-0 px-3 py-2 rounded border border-white/20 bg-white/5 hover:bg-white/10 text-xs transition-colors"
               >
-                {copiedType === "p" ? "완료" : "복사"}
+                {copiedType === "p" ? t("home.copied") : t("home.copy")}
               </button>
             </div>
           </li>
-          <li>비밀번호를 설정합니다.</li>
-          <li>자신의 기록 페이지로 이동하여, 배치 저장 모드를 누르고 비밀번호를 입력합니다.</li>
-          <li>곡을 선택한 뒤 배치를 저장합니다.</li>
+          <li>{t("home.batch.step4")}</li>
+          <li>{t("home.batch.step5")}</li>
+          <li>{t("home.batch.step6")}</li>
         </ol>
       </section>
 
       <section className="flex flex-col gap-3">
-        <h2 className="text-lg font-semibold">참고</h2>
+        <h2 className="text-lg font-semibold">{t("home.reference.title")}</h2>
         <a href="https://zasa.sakura.ne.jp/dp/" target="_blank" className="text-indigo-400">
-          DP 비공식 난이도표 사이트
+          {t("home.reference.unofficial")}
         </a>
       </section>
 
       <section className="flex flex-col gap-3 mb-4">
-        <h2 className="text-lg font-semibold">기타</h2>
+        <h2 className="text-lg font-semibold">{t("home.misc.title")}</h2>
         <a href="https://ereter.net/" target="_blank" className="text-indigo-400">
           ereter.net
         </a>
         <a href="https://iidx.in/" target="_blank" className="text-indigo-400">
-          오소리넷 - DP 리커멘드 계산 & 곡 추천 서비스 by grom
+          {t("home.misc.osori")}
         </a>
         <a href="https://dpoptionz.vercel.app/" target="_blank" className="text-indigo-400">
-          Double Play Optionz - DP 배치 추천 사이트 by 𝔸𝕁(DXR*00)
+          {t("home.misc.dpoptionz")}
         </a>
         <a href="https://open.kakao.com/o/sHxDbXrh" target="_blank" className="text-indigo-400">
-          불쌍한 개발자에게 한 푼 줘야지 (카카오톡 오픈채팅)
+          {t("home.misc.donate")}
         </a>
       </section>
     </div>

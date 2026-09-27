@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useT } from "../lib/i18n";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -14,6 +15,7 @@ export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
+  const t = useT();
 
   useEffect(() => {
     fetch(`${API_URL}/users`)
@@ -29,21 +31,21 @@ export default function UsersPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-bold">사용자</h1>
+      <h1 className="text-2xl font-bold">{t("users.title")}</h1>
 
       <input
         type="text"
         value={query}
         onChange={(e) => setQuery(e.target.value.replace(/[^\x21-\x7E]/g, "").slice(0, 8))}
-        placeholder="닉네임 또는 IIDX ID"
+        placeholder={t("common.searchPlaceholder")}
         maxLength={8}
         className="px-3 py-1.5 rounded border border-white/20 bg-white/5 text-sm w-64 focus:outline-none focus:border-indigo-400"
       />
 
       {loading ? (
-        <p className="text-white/40 text-sm">데이터를 가져오는 중...</p>
+        <p className="text-white/40 text-sm">{t("common.loading")}</p>
       ) : filtered.length === 0 ? (
-        <p className="text-white/40 text-sm">검색 결과가 없습니다.</p>
+        <p className="text-white/40 text-sm">{t("users.noResults")}</p>
       ) : (
         <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 gap-3">
           {filtered.map((user) => (

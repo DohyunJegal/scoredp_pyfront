@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useT } from "../lib/i18n";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -32,6 +33,7 @@ export default function RandomPage() {
   const [result, setResult] = useState<SongItem | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [picking, setPicking] = useState(false);
+  const t = useT();
 
   // 마운트 시 전체 레벨의 비공식 난이도 1회 로드
   useEffect(() => {
@@ -75,13 +77,13 @@ export default function RandomPage() {
       url.searchParams.set("to_unofficial", String(toUnofficial));
       const r = await fetch(url.toString());
       if (r.status === 404) {
-        setError("해당 범위에 곡이 없습니다");
+        setError(t("random.noSongs"));
         setResult(null);
       } else {
         setResult(await r.json());
       }
     } catch {
-      setError("오류가 발생했습니다");
+      setError(t("random.error"));
     } finally {
       setPicking(false);
     }
@@ -92,7 +94,7 @@ export default function RandomPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-bold">랜덤</h1>
+      <h1 className="text-2xl font-bold">{t("random.title")}</h1>
 
       <div className="flex flex-col gap-3">
         <div className="flex items-center gap-2 flex-wrap">
@@ -149,7 +151,7 @@ export default function RandomPage() {
             disabled={picking || fromUnofficial == null || toUnofficial == null}
             className="px-5 py-1.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed rounded text-sm font-semibold transition-colors"
           >
-            {picking ? "뽑는 중" : "뽑기"}
+            {picking ? t("random.picking") : t("random.pick")}
           </button>
         </div>
 

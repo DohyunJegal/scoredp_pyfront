@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { CHART_STYLE, getTitleColor } from "../songStyle";
+import { useT } from "../lib/i18n";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -30,6 +31,7 @@ export default function TierPage() {
   const [level, setLevel] = useState<number | null>(12);
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+  const t = useT();
 
   const handleCopy = (title: string) => {
     navigator.clipboard.writeText(title.trim()).then(() => {
@@ -61,10 +63,10 @@ export default function TierPage() {
     <div className="flex flex-col gap-6">
       {copied && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-white/10 backdrop-blur text-white text-xs px-4 py-2 rounded-full pointer-events-none">
-          곡명이 복사되었어요
+          {t("tier.copied")}
         </div>
       )}
-      <h1 className="text-2xl font-bold">서열표</h1>
+      <h1 className="text-2xl font-bold">{t("tier.title")}</h1>
 
       {/* 레벨 필터 */}
       <div className="flex gap-2 flex-wrap">
@@ -83,13 +85,13 @@ export default function TierPage() {
         ))}
       </div>
 
-      {loading && <p className="text-white/40 text-sm">데이터를 가져오는 중...</p>}
+      {loading && <p className="text-white/40 text-sm">{t("common.loading")}</p>}
 
       {groups.map(([lvKey, items]) => (
         <section key={lvKey} className="flex flex-col gap-2">
           <h2 className="sticky top-0 z-10 bg-[#0f0f1a]/90 backdrop-blur text-sm font-semibold text-indigo-300 border-b border-white/10 py-1">
             ☆{lvKey}
-            <span className="ml-2 text-white/30 font-normal">{items.length}곡</span>
+            <span className="ml-2 text-white/30 font-normal">{items.length}{t("tier.songCountSuffix")}</span>
           </h2>
           <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-1.5">
             {items.map((item, i) => (
